@@ -1,9 +1,6 @@
 package com.example.payment.service;
 
-import com.example.payment.dto.ErrorResponse;
-import com.example.payment.dto.PaymentConfirmRequest;
-import com.example.payment.dto.PaymentCreatedEvent;
-import com.example.payment.dto.PaymentDto;
+import com.example.payment.dto.*;
 import com.example.payment.domain.Payment;
 import com.example.payment.kafka.PaymentProducer;
 import com.example.payment.repository.PaymentRepository;
@@ -21,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -124,7 +122,11 @@ public class PaymentService {
 
         Payment payment = paymentRepository.findById(paymentId).orElseThrow();
         payment.cancel();
-        paymentProducer.sendStockRestore
+        paymentProducer.sendStockRestore(StockRestoreEvent.builder()
+                        .eventId(UUID.randomUUID().toString())
+                        .orderId(payment.getOrderId())
+                        .eventType("STOCK_RESTORE")
+                .build());
     }
 
     private Payment convertPayment(PaymentDto paymentDto) {

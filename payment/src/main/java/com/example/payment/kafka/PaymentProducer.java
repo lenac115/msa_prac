@@ -2,6 +2,7 @@ package com.example.payment.kafka;
 
 import com.example.payment.dto.PaymentCompletedEvent;
 import com.example.payment.dto.PaymentDto;
+import com.example.payment.dto.StockRestoreEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -37,5 +38,10 @@ public class PaymentProducer {
                 .timestamp(Instant.now())
                 .eventType("PAYMENT_FAILURE")
                 .build());
+    }
+
+    public void sendStockRestore(StockRestoreEvent stockRestore) {
+        log.info("Sending stock restore event to Kafka: {}", stockRestore);
+        kafkaTemplate.send("stock-restore-topic", stockRestore);
     }
 }
