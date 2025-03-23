@@ -59,7 +59,7 @@ public class PaymentService {
         // 결제 상태에 따라 처리 분기
         if (payment.getStatus() == Payment.Status.PAID) {
             processPaymentSuccess(payment);
-        } else if(payment.getStatus() == Payment.Status.FAILED) {
+        } else if (payment.getStatus() == Payment.Status.FAILED) {
             processPaymentFailure(payment);
         }
     }
@@ -123,9 +123,9 @@ public class PaymentService {
         Payment payment = paymentRepository.findById(paymentId).orElseThrow();
         payment.cancel();
         paymentProducer.sendStockRestore(StockRestoreEvent.builder()
-                        .eventId(UUID.randomUUID().toString())
-                        .orderId(payment.getOrderId())
-                        .eventType("STOCK_RESTORE")
+                .eventId(UUID.randomUUID().toString())
+                .orderId(payment.getOrderId())
+                .eventType("STOCK_RESTORE")
                 .build());
     }
 
