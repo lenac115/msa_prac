@@ -5,6 +5,9 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/api-gateway.main.iml" filepath="$PROJECT_DIR$/.idea/modules/api-gateway.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/auth.main.iml" filepath="$PROJECT_DIR$/.idea/modules/auth.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/msa_project.iml" filepath="$PROJECT_DIR$/.idea/msa_project.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/order.main.iml" filepath="$PROJECT_DIR$/.idea/modules/order.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/payment.main.iml" filepath="$PROJECT_DIR$/.idea/modules/payment.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/product.main.iml" filepath="$PROJECT_DIR$/.idea/modules/product.main.iml" />
     </modules>
   </component>
 </project>

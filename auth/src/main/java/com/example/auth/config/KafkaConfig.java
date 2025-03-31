@@ -1,12 +1,10 @@
-package com.example.order.config;
+package com.example.auth.config;
 
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ser.std.StringSerializer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
-import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
@@ -15,7 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Configuration
-public class kafkaConfig {
+public class KafkaConfig {
 
     @Bean
     public ProducerFactory<String, Object> producerFactory() {
@@ -29,18 +27,5 @@ public class kafkaConfig {
     @Bean
     public KafkaTemplate<String, Object> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
-    }
-
-    @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, Object> batchFactory(
-            ConsumerFactory<String, Object> consumerFactory) {
-
-        ConcurrentKafkaListenerContainerFactory<String, Object> factory =
-                new ConcurrentKafkaListenerContainerFactory<>();
-
-        factory.setConsumerFactory(consumerFactory);
-        factory.setBatchListener(true);
-
-        return factory;
     }
 }

@@ -1,4 +1,4 @@
-package com.example.product.config;
+package com.example.order.config;
 
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ser.std.StringSerializer;
@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Configuration
-public class kafkaConfig {
+public class KafkaConfig {
 
     @Bean
     public ProducerFactory<String, Object> producerFactory() {

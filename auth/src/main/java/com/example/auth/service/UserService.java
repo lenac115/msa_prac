@@ -111,9 +111,10 @@ public class UserService {
     @Transactional
     public void register(UserDto userDto) {
 
-        if (userRepository.findByEmail(userDto.getEmail()).isPresent()) {
+        if (userRepository.findByEmail(userDto.getEmail()).orElse(null) != null) {
             throw new CustomException(UserErrorCode.ALREADY_EXIST_EMAIL);
         }
+
         User registerUser = convertUserDto(userDto);
         userRepository.save(registerUser);
     }
@@ -141,7 +142,7 @@ public class UserService {
                 .orElseThrow(() -> new CustomException(UserErrorCode.NOT_EXIST_EMAIL));
 
         if (!findUser.getEmail().equals(username)) {
-            throw new CustomException(UserErrorCode.ALREADY_EXIST_EMAIL);
+            throw new CustomException(CommonErrorCode.INVALID_PARAMETER);
         }
 
         findUser.updateUser(userDto);
