@@ -1,6 +1,5 @@
 package com.example.auth.kafka;
 
-import com.example.auth.dto.TokenResponse;
 import com.example.auth.dto.UserDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

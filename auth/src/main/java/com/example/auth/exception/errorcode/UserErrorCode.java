@@ -15,7 +15,11 @@ public enum UserErrorCode implements ErrorCode {
     INVALID_USER_TOKEN(HttpStatus.UNAUTHORIZED, "Invalid User Token"),
     NOT_ACCOUNT_AUTH(HttpStatus.UNAUTHORIZED, "Not Account Auth"),
     NOT_EQUAL_PASSWORD(HttpStatus.UNAUTHORIZED, "Not Equal Password"),
-    ALREADY_EXIST_EMAIL(HttpStatus.BAD_REQUEST, "Already Exist Email" ),;
+    ALREADY_EXIST_EMAIL(HttpStatus.BAD_REQUEST, "Already Exist Email" ),
+    REFRESH_TOKEN_NOT_FOUND_IN_REDIS(HttpStatus.BAD_REQUEST, "Refresh Token Not Found In Redis"),
+    REFRESH_TOKEN_EXPIRED(HttpStatus.BAD_REQUEST, "Refresh Token Expired"),
+    ACCESS_TOKEN_EXPIRED(HttpStatus.BAD_REQUEST, "Access Token Expired"),
+    TOKEN_MISMATCH_BETWEEN_CLIENT_AND_SERVER(HttpStatus.BAD_REQUEST, "Token Mismatch Between Client And Server"),;
 
     private final HttpStatus httpStatus;
     private final String message;

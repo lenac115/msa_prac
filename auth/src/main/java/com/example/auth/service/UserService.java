@@ -10,6 +10,7 @@ import com.example.auth.exception.errorcode.UserErrorCode;
 import com.example.auth.jwt.JwtTokenProvider;
 import com.example.auth.redis.RedisUtils;
 import com.example.auth.repository.UserRepository;
+import com.example.auth.uuid.BasicUUIDGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -36,6 +37,7 @@ public class UserService {
     private final EmailService emailService;
     private final RedisUtils redisUtils;
     private final PasswordEncoder passwordEncoder;
+    private final BasicUUIDGenerator uuidGenerator;
 
     @Transactional
     public TokenResponse reissue(String requestAccessToken, String requestRefreshToken) {
@@ -45,14 +47,16 @@ public class UserService {
 
         Authentication authentication = tokenProvider.getAuthentication(requestAccessToken);
 
-        String refreshToken = (String) redisUtils.get("RT:" + authentication.getName());
+        Optional<String> refreshTokenOptional = (Optional<String>) redisUtils.get("RT:" + authentication.getName());
+        String refreshToken = refreshTokenOptional.orElseThrow(() -> new CustomException(UserErrorCode.REFRESH_TOKEN_NOT_FOUND_IN_REDIS));
 
-        if (refreshToken == null) {
-            throw new CustomException(UserErrorCode.INVALID_USER_TOKEN);
-        }
         if (!tokenProvider.validateToken(refreshToken)) {
             redisUtils.delete("RT:" + authentication.getName());
-            throw new CustomException(UserErrorCode.INVALID_USER_TOKEN);
+            throw new CustomException(UserErrorCode.REFRESH_TOKEN_EXPIRED);
+        }
+
+        if (!requestRefreshToken.equals(refreshToken)) {
+            throw new CustomException(UserErrorCode.TOKEN_MISMATCH_BETWEEN_CLIENT_AND_SERVER);
         }
 
         TokenResponse tokenResponse = tokenProvider.generateToken(authentication);
@@ -86,10 +90,15 @@ public class UserService {
 
         User findUser = userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(UserErrorCode.NOT_EXIST_EMAIL));
+
+        if(!tokenProvider.validateToken(accessToken)) {
+            throw new CustomException(UserErrorCode.INVALID_USER_TOKEN);
+        }
+
         Authentication authentication = tokenProvider.getAuthentication(accessToken);
 
         if (!authentication.getName().equals(findUser.getEmail())) {
-            throw new CustomException(UserErrorCode.INVALID_USER_TOKEN);
+            throw new CustomException(UserErrorCode.NOT_ACCOUNT_AUTH);
         }
 
         SecurityContextHolder.getContext().setAuthentication(null);
@@ -114,6 +123,7 @@ public class UserService {
         if (userRepository.findByEmail(userDto.getEmail()).orElse(null) != null) {
             throw new CustomException(UserErrorCode.ALREADY_EXIST_EMAIL);
         }
+        userDto.setPassword(passwordEncoder.encode(userDto.getPassword()));
 
         User registerUser = convertUserDto(userDto);
         userRepository.save(registerUser);
@@ -126,8 +136,14 @@ public class UserService {
         User findUser = userRepository.findByEmail(username)
                 .orElseThrow(() -> new CustomException(UserErrorCode.NOT_EXIST_EMAIL));
 
-        if (!findUser.getEmail().equals(username)) {
-            throw new CustomException(UserErrorCode.ALREADY_EXIST_EMAIL);
+        if(!tokenProvider.validateToken(accessToken)) {
+            throw new CustomException(UserErrorCode.INVALID_USER_TOKEN);
+        }
+
+        Authentication authentication = tokenProvider.getAuthentication(accessToken);
+
+        if (!authentication.getName().equals(findUser.getEmail())) {
+            throw new CustomException(UserErrorCode.NOT_ACCOUNT_AUTH);
         }
 
         redisUtils.setBlackList(accessToken, "accessToken", 1440);
@@ -153,14 +169,18 @@ public class UserService {
         User findUser = userRepository.findByEmail(username)
                 .orElseThrow(() -> new CustomException(UserErrorCode.NOT_EXIST_EMAIL));
 
-        if(!findUser.getPassword().equals(changePasswordReq.getOldPassword())) {
+        if(!passwordEncoder.matches(changePasswordReq.getNewPassword(), findUser.getPassword())) {
             throw new CustomException(UserErrorCode.NOT_EQUAL_PASSWORD);
+        }
+
+        if(!tokenProvider.validateToken(accessToken)) {
+            throw new CustomException(UserErrorCode.INVALID_USER_TOKEN);
         }
 
         redisUtils.setBlackList(accessToken, "accessToken", 1440);
         redisUtils.delete("RT:" + username);
         SecurityContextHolder.getContext().setAuthentication(null);
-        userRepository.delete(findUser);
+        findUser.updatePassword(passwordEncoder.encode(changePasswordReq.getNewPassword()));
     }
 
     @Transactional
@@ -184,7 +204,7 @@ public class UserService {
         User user = userRepository.findByEmail(username)
                 .orElseThrow(() -> new CustomException(UserErrorCode.NOT_EXIST_EMAIL));
 
-        String token = UUID.randomUUID().toString(); // 랜덤 토큰 생성
+        String token = uuidGenerator.generateStringUUID(); // 랜덤 토큰 생성
         redisUtils.set(token, user.getEmail(), 10);
 
         // 이메일로 비밀번호 재설정 링크 전송
@@ -195,10 +215,11 @@ public class UserService {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if(!authentication.getName().equals(username)) {
-            throw new CustomException(UserErrorCode.NOT_EXIST_EMAIL);
+            throw new CustomException(UserErrorCode.NOT_ACCOUNT_AUTH);
         }
 
-        User user = userRepository.findByEmail(authentication.getName()).orElseThrow(() -> new CustomException(UserErrorCode.NOT_EXIST_EMAIL));
+        User user =
+                userRepository.findByEmail(authentication.getName()).orElseThrow(() -> new CustomException(UserErrorCode.NOT_EXIST_EMAIL));
         return user.getId();
     }
 
@@ -207,7 +228,7 @@ public class UserService {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if(!authentication.getName().equals(username)) {
-            throw new CustomException(UserErrorCode.NOT_EXIST_EMAIL);
+            throw new CustomException(UserErrorCode.NOT_ACCOUNT_AUTH);
         }
 
         User user = userRepository.findByEmail(authentication.getName()).orElseThrow(() -> new CustomException(UserErrorCode.NOT_EXIST_EMAIL));
