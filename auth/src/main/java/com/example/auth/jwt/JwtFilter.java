@@ -29,7 +29,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
         try {
             if (token != null) {
-                if (tokenProvider.validateToken(token)) {
+                if (tokenProvider.validateToken(token).getValid()) {
                     // 유효한 토큰 처리
                     Authentication authentication = tokenProvider.getAuthentication(token);
                     SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -55,7 +55,6 @@ public class JwtFilter extends OncePerRequestFilter {
     private void handleExpiredToken(HttpServletRequest request, HttpServletResponse response, String expiredToken)
             throws IOException {
         Authentication authentication = tokenProvider.getAuthentication(expiredToken);
-        System.out.println("try new token");
 
         if (authentication == null) {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "INVALID_TOKEN");
@@ -67,7 +66,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
         if (refreshToken != null) {
             refreshToken = refreshToken.replace("\"", "");
-            if(!tokenProvider.validateToken(refreshToken)) {
+            if(!tokenProvider.validateToken(refreshToken).getValid()) {
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "INVALID_TOKEN");
                 return;
             }

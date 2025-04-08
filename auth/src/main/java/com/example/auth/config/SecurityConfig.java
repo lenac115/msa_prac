@@ -34,9 +34,8 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity
                 .authorizeHttpRequests((requests) -> requests
-                        .requestMatchers(HttpMethod.POST, "/user/login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/user/logout").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/user/register").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/public/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/auth/public/**").permitAll()
                         .requestMatchers("/css/**", "/js/**", "/img/**", "/favicon.ico", "/error").permitAll() //정적파일
                         .anyRequest().authenticated() // 인증 되지 않는 사용자일 경우 모든 요청을 Spring Security 에서 가로챔(설정한 url을 제외한 url은 이 설정을 적용할 예정)
                 )
@@ -50,7 +49,7 @@ public class SecurityConfig {
                         .authenticationEntryPoint(jwtAuthenticationEntryPoint)
                         .accessDeniedPage("/api/users/accessDenied")) // 권한에 따른 접근 불가 페이지 설정
                 .csrf((csrf) -> csrf
-                        .ignoringRequestMatchers("/api/**"))
+                        .ignoringRequestMatchers("/auth/**"))
                 .sessionManagement((session) -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .with(new JwtSecurityConfig(tokenProvider, userService, redisUtils), Customizer.withDefaults());

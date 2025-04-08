@@ -41,7 +41,7 @@ public class UserService {
 
     @Transactional
     public TokenResponse reissue(String requestAccessToken, String requestRefreshToken) {
-        if (!tokenProvider.validateToken(requestRefreshToken)) {
+        if (!tokenProvider.validateToken(requestRefreshToken).getValid()) {
             throw new CustomException(UserErrorCode.INVALID_USER_TOKEN);
         }
 
@@ -50,7 +50,7 @@ public class UserService {
         Optional<String> refreshTokenOptional = (Optional<String>) redisUtils.get("RT:" + authentication.getName());
         String refreshToken = refreshTokenOptional.orElseThrow(() -> new CustomException(UserErrorCode.REFRESH_TOKEN_NOT_FOUND_IN_REDIS));
 
-        if (!tokenProvider.validateToken(refreshToken)) {
+        if (!tokenProvider.validateToken(refreshToken).getValid()) {
             redisUtils.delete("RT:" + authentication.getName());
             throw new CustomException(UserErrorCode.REFRESH_TOKEN_EXPIRED);
         }
@@ -72,7 +72,7 @@ public class UserService {
         User findUser = userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(UserErrorCode.NOT_EXIST_EMAIL));
 
-        if (!password.equals(findUser.getPassword())) {
+        if (!passwordEncoder.matches(password, findUser.getPassword())) {
             throw new CustomException(UserErrorCode.NOT_EQUAL_PASSWORD);
         }
 
@@ -91,7 +91,7 @@ public class UserService {
         User findUser = userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(UserErrorCode.NOT_EXIST_EMAIL));
 
-        if(!tokenProvider.validateToken(accessToken)) {
+        if(!tokenProvider.validateToken(accessToken).getValid()) {
             throw new CustomException(UserErrorCode.INVALID_USER_TOKEN);
         }
 
@@ -136,7 +136,7 @@ public class UserService {
         User findUser = userRepository.findByEmail(username)
                 .orElseThrow(() -> new CustomException(UserErrorCode.NOT_EXIST_EMAIL));
 
-        if(!tokenProvider.validateToken(accessToken)) {
+        if(!tokenProvider.validateToken(accessToken).getValid()) {
             throw new CustomException(UserErrorCode.INVALID_USER_TOKEN);
         }
 
@@ -173,7 +173,7 @@ public class UserService {
             throw new CustomException(UserErrorCode.NOT_EQUAL_PASSWORD);
         }
 
-        if(!tokenProvider.validateToken(accessToken)) {
+        if(!tokenProvider.validateToken(accessToken).getValid()) {
             throw new CustomException(UserErrorCode.INVALID_USER_TOKEN);
         }
 

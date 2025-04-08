@@ -8,6 +8,7 @@ import com.example.auth.exception.CustomException;
 import com.example.auth.exception.errorcode.CommonErrorCode;
 import com.example.auth.exception.errorcode.UserErrorCode;
 import com.example.auth.jwt.JwtTokenProvider;
+import com.example.auth.jwt.TokenValidationResult;
 import com.example.auth.redis.RedisUtils;
 import com.example.auth.repository.UserRepository;
 import com.example.auth.service.EmailService;
@@ -31,7 +32,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -315,7 +315,10 @@ public class UserServiceTest {
                 .build();
 
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
-        when(tokenProvider.validateToken(accessToken)).thenReturn(false);
+        when(tokenProvider.validateToken(accessToken)).thenReturn(TokenValidationResult.builder()
+                .valid(false)
+                .tokenErrorReason(TokenValidationResult.TokenErrorReason.INVALID)
+                .build());
 
         // when & then
         CustomException exception =
@@ -336,7 +339,10 @@ public class UserServiceTest {
         Authentication authentication = new TestingAuthenticationToken("wrongUser@naver.com", "password");
 
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
-        when(tokenProvider.validateToken(accessToken)).thenReturn(true);
+        when(tokenProvider.validateToken(accessToken)).thenReturn(TokenValidationResult.builder()
+                .valid(true)
+                .tokenErrorReason(TokenValidationResult.TokenErrorReason.VALID)
+                .build());
         when(tokenProvider.getAuthentication(accessToken)).thenReturn(authentication);
 
         // when & then
@@ -358,7 +364,10 @@ public class UserServiceTest {
         Authentication authentication = new TestingAuthenticationToken(email, "password");
 
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
-        when(tokenProvider.validateToken(accessToken)).thenReturn(true);
+        when(tokenProvider.validateToken(accessToken)).thenReturn(TokenValidationResult.builder()
+                .valid(true)
+                .tokenErrorReason(TokenValidationResult.TokenErrorReason.VALID)
+                .build());
         when(tokenProvider.getAuthentication(accessToken)).thenReturn(authentication);
 
         // when
@@ -395,7 +404,10 @@ public class UserServiceTest {
                 .build();
 
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
-        when(tokenProvider.validateToken(accessToken)).thenReturn(false);
+        when(tokenProvider.validateToken(accessToken)).thenReturn(TokenValidationResult.builder()
+                .valid(false)
+                .tokenErrorReason(TokenValidationResult.TokenErrorReason.INVALID)
+                .build());
 
         // when & then
         CustomException exception =
@@ -416,7 +428,10 @@ public class UserServiceTest {
         Authentication authentication = new TestingAuthenticationToken("wrongUser@naver.com", "password");
 
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
-        when(tokenProvider.validateToken(accessToken)).thenReturn(true);
+        when(tokenProvider.validateToken(accessToken)).thenReturn(TokenValidationResult.builder()
+                .valid(true)
+                .tokenErrorReason(TokenValidationResult.TokenErrorReason.VALID)
+                .build());
         when(tokenProvider.getAuthentication(accessToken)).thenReturn(authentication);
 
         // when & then
@@ -438,7 +453,10 @@ public class UserServiceTest {
         Authentication authentication = new TestingAuthenticationToken(email, "password");
 
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
-        when(tokenProvider.validateToken(accessToken)).thenReturn(true);
+        when(tokenProvider.validateToken(accessToken)).thenReturn(TokenValidationResult.builder()
+                .valid(true)
+                .tokenErrorReason(TokenValidationResult.TokenErrorReason.VALID)
+                .build());
         when(tokenProvider.getAuthentication(accessToken)).thenReturn(authentication);
 
         // when
@@ -506,7 +524,10 @@ public class UserServiceTest {
                 .build();
 
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
-        when(tokenProvider.validateToken(accessToken)).thenReturn(false);
+        when(tokenProvider.validateToken(accessToken)).thenReturn(TokenValidationResult.builder()
+                .valid(false)
+                .tokenErrorReason(TokenValidationResult.TokenErrorReason.INVALID)
+                .build());
         when(passwordEncoder.matches(changePasswordReq.getNewPassword(), user.getPassword())).thenReturn(true);
 
         // when & then
@@ -530,7 +551,10 @@ public class UserServiceTest {
                 .build();
 
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
-        when(tokenProvider.validateToken(accessToken)).thenReturn(true);
+        when(tokenProvider.validateToken(accessToken)).thenReturn(TokenValidationResult.builder()
+                .valid(true)
+                .tokenErrorReason(TokenValidationResult.TokenErrorReason.VALID)
+                .build());
         when(passwordEncoder.matches(changePasswordReq.getNewPassword(), user.getPassword())).thenReturn(true);
         when(passwordEncoder.encode(changePasswordReq.getNewPassword())).thenReturn("newPassword");
 
@@ -723,7 +747,10 @@ public class UserServiceTest {
         String accessToken = "accessToken";
         String refreshToken = "RT:testUser@naver.com";
 
-        when(tokenProvider.validateToken(refreshToken)).thenReturn(false);
+        when(tokenProvider.validateToken(refreshToken)).thenReturn(TokenValidationResult.builder()
+                .valid(false)
+                .tokenErrorReason(TokenValidationResult.TokenErrorReason.INVALID)
+                .build());
 
         // when & then
         CustomException exception =
@@ -740,7 +767,10 @@ public class UserServiceTest {
 
         Authentication authentication = new TestingAuthenticationToken("testUser@naver.com", "password");
 
-        when(tokenProvider.validateToken(refreshToken)).thenReturn(true);
+        when(tokenProvider.validateToken(refreshToken)).thenReturn(TokenValidationResult.builder()
+                .valid(true)
+                .tokenErrorReason(TokenValidationResult.TokenErrorReason.VALID)
+                .build());
         when(tokenProvider.getAuthentication(accessToken)).thenReturn(authentication);
         when(redisUtils.get(refreshToken)).thenReturn(Optional.empty());
 
@@ -761,8 +791,14 @@ public class UserServiceTest {
         Authentication authentication = new TestingAuthenticationToken("testUser@naver.com", "password");
 
         when(tokenProvider.validateToken(refreshToken))
-                .thenReturn(true)
-                .thenReturn(false);
+                .thenReturn(TokenValidationResult.builder()
+                        .valid(true)
+                        .tokenErrorReason(TokenValidationResult.TokenErrorReason.VALID)
+                        .build())
+                .thenReturn(TokenValidationResult.builder()
+                        .valid(false)
+                        .tokenErrorReason(TokenValidationResult.TokenErrorReason.INVALID)
+                        .build());
         when(tokenProvider.getAuthentication(accessToken)).thenReturn(authentication);
         when(redisUtils.get(refreshToken)).thenReturn(Optional.of(redisRefreshToken));
 
@@ -782,8 +818,14 @@ public class UserServiceTest {
 
         Authentication authentication = new TestingAuthenticationToken("testUser@naver.com", "password");
 
-        when(tokenProvider.validateToken(refreshToken)).thenReturn(true);
-        when(tokenProvider.validateToken(redisRefreshToken)).thenReturn(true);
+        when(tokenProvider.validateToken(refreshToken)).thenReturn(TokenValidationResult.builder()
+                .valid(true)
+                .tokenErrorReason(TokenValidationResult.TokenErrorReason.VALID)
+                .build());
+        when(tokenProvider.validateToken(redisRefreshToken)).thenReturn(TokenValidationResult.builder()
+                .valid(true)
+                .tokenErrorReason(TokenValidationResult.TokenErrorReason.VALID)
+                .build());
         when(tokenProvider.getAuthentication(accessToken)).thenReturn(authentication);
         when(redisUtils.get(refreshToken)).thenReturn(Optional.of(redisRefreshToken));
 
@@ -804,8 +846,14 @@ public class UserServiceTest {
         Authentication authentication = new TestingAuthenticationToken("testUser@naver.com", "password");
         TokenResponse mockTokenResponse = new TokenResponse(accessToken, "Bearer", refreshToken);
 
-        when(tokenProvider.validateToken(refreshToken)).thenReturn(true);
-        when(tokenProvider.validateToken(redisRefreshToken)).thenReturn(true);
+        when(tokenProvider.validateToken(refreshToken)).thenReturn(TokenValidationResult.builder()
+                .valid(true)
+                .tokenErrorReason(TokenValidationResult.TokenErrorReason.VALID)
+                .build());
+        when(tokenProvider.validateToken(redisRefreshToken)).thenReturn(TokenValidationResult.builder()
+                .valid(true)
+                .tokenErrorReason(TokenValidationResult.TokenErrorReason.VALID)
+                .build());
         when(tokenProvider.getAuthentication(accessToken)).thenReturn(authentication);
         when(redisUtils.get("RT:" + refreshToken)).thenReturn(Optional.of(redisRefreshToken));
         when(tokenProvider.generateToken(any(Authentication.class))).thenReturn(mockTokenResponse);
