@@ -3,6 +3,7 @@ package com.example.auth.jwt;
 import com.example.auth.dto.TokenResponse;
 import com.example.auth.redis.RedisUtils;
 import com.example.auth.service.UserService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,7 +37,8 @@ public class JwtFilter extends OncePerRequestFilter {
                     System.out.println("Authentication set: " + authentication.getName());
                 } else if (tokenProvider.isTokenExpired(token)) {
                     // Access Token 만료 시 처리
-                    handleExpiredToken(request, response, token);
+                    Boolean reissued = handleExpiredToken(request, response, token);
+                    if (!reissued) return;
                 } else {
                     response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "INVALID_TOKEN");
                     return;
@@ -52,13 +54,13 @@ public class JwtFilter extends OncePerRequestFilter {
         }
     }
 
-    private void handleExpiredToken(HttpServletRequest request, HttpServletResponse response, String expiredToken)
+    private Boolean handleExpiredToken(HttpServletRequest request, HttpServletResponse response, String expiredToken)
             throws IOException {
         Authentication authentication = tokenProvider.getAuthentication(expiredToken);
 
         if (authentication == null) {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "INVALID_TOKEN");
-            return;
+            return false;
         }
 
         String email = authentication.getName();
@@ -66,13 +68,13 @@ public class JwtFilter extends OncePerRequestFilter {
 
         if (refreshToken != null) {
             refreshToken = refreshToken.replace("\"", "");
-            if(!tokenProvider.validateToken(refreshToken).getValid()) {
+            if (!tokenProvider.validateToken(refreshToken).getValid()) {
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "INVALID_TOKEN");
-                return;
+                return false;
             }
         } else {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "INVALID_TOKEN");
-            return;
+            return false;
         }
 
         try {
@@ -82,12 +84,21 @@ public class JwtFilter extends OncePerRequestFilter {
             response.setHeader("Authorization", "Bearer " + newTokens.getAccessToken());
             redisUtils.set("RT:" + email, newTokens.getRefreshToken(), 4320); // Redis에 Refresh Token 갱신
 
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+
+            String json = new ObjectMapper().writeValueAsString(newTokens);
+            response.getWriter().write(json);
+
             // SecurityContextHolder에 새로운 인증 설정
             Authentication newAuthentication = tokenProvider.getAuthentication(newTokens.getAccessToken());
             SecurityContextHolder.getContext().setAuthentication(newAuthentication);
+            return true;
 
         } catch (Exception e) {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "token generation failed");
+            System.out.println("에러" + e.getMessage());
+            return false;
         }
     }
 

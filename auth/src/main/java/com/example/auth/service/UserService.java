@@ -47,7 +47,8 @@ public class UserService {
 
         Authentication authentication = tokenProvider.getAuthentication(requestAccessToken);
 
-        Optional<String> refreshTokenOptional = (Optional<String>) redisUtils.get("RT:" + authentication.getName());
+        Optional<String> refreshTokenOptional =
+                Optional.ofNullable((String) redisUtils.get("RT:" + authentication.getName()));
         String refreshToken = refreshTokenOptional.orElseThrow(() -> new CustomException(UserErrorCode.REFRESH_TOKEN_NOT_FOUND_IN_REDIS));
 
         if (!tokenProvider.validateToken(refreshToken).getValid()) {

@@ -35,13 +35,18 @@ public class JwtFilter implements GatewayFilter {
         // Authorization 헤더 확인
         String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return handleError(exchange, HttpStatus.UNAUTHORIZED);
+            String path = exchange.getRequest().getPath().toString();
+            // 권한 체크는 해야 함
+            if (!isAuthorized(path, null)) {
+                return handleError(exchange, HttpStatus.FORBIDDEN);
+            }
+            return chain.filter(exchange); // 인증 없이 허용
         }
 
         String token = authHeader.substring(7);
 
         // 토큰 검증
-        if (!tokenProvider.validateToken(token)) {
+        if (!tokenProvider.validateToken(token).getValid()) {
             if (tokenProvider.isTokenExpired(token)) {
                 return reissueAccessToken(exchange, chain, token);
             } else {
@@ -51,11 +56,12 @@ public class JwtFilter implements GatewayFilter {
 
         // JWT에서 ROLE 정보 가져오기
         Claims claims = tokenProvider.parseClaims(token);
-        String auth = claims.get("auth", String.class); // 예: "SELLER" 또는 "BUYER"
+        String auth = claims.get("auth", String.class); // "SELLER" 또는 "BUYER"
         String path = request.getURI().getPath();
 
         // 권한 검사
         if (!isAuthorized(path, auth)) {
+            System.out.println("권한 검사 실패");
             return handleError(exchange, HttpStatus.FORBIDDEN);
         }
 
@@ -72,21 +78,25 @@ public class JwtFilter implements GatewayFilter {
         // `auth-service`에 `reissue` 요청 보내기
         return webClientBuilder.build()
                 .post()
-                .uri("http://auth-service/auth/common/reissue")
+                .uri("/auth/common/reissue")
                 .header("Authorization", "Bearer " + expiredToken)
                 .header("Refresh-Token", refreshToken)
                 .retrieve()
                 .bodyToMono(TokenResponse.class)
                 .flatMap(response -> {
-                    // 새로운 Access Token을 응답 헤더에 추가
-                    exchange.getResponse().getHeaders().add("Authorization", "Bearer " + response.getAccessToken());
-                    return chain.filter(exchange);
-                })
-                .onErrorResume(e -> handleError(exchange, HttpStatus.UNAUTHORIZED));
+                    // 새로운 Access Token을 Authorization 헤더에 다시 셋팅
+                    ServerHttpRequest mutatedRequest = exchange.getRequest()
+                            .mutate()
+                            .header("Authorization", "Bearer " + response.getAccessToken())
+                            .build();
+                    exchange.getResponse().getHeaders().add("New-Access-Token", response.getAccessToken());
+                    // request 교체 후 체인 필터 진행
+                    return chain.filter(exchange.mutate().request(mutatedRequest).build());
+                });
     }
 
     // API 경로별 권한 검사
-    private boolean isAuthorized(String path, String auth) {
+    public boolean isAuthorized(String path, String role) {
         Map<String, List<String>> roleMappings = new HashMap<>();
         AntPathMatcher pathMatcher = new AntPathMatcher();
 
@@ -108,12 +118,15 @@ public class JwtFilter implements GatewayFilter {
         roleMappings.put("/product/**", List.of("SELLER")); // SELLER만 접근 가능
 
         for (Map.Entry<String, List<String>> entry : roleMappings.entrySet()) {
-            if (pathMatcher.match(entry.getKey(), path)) {  // URL 패턴 매칭
+            if (pathMatcher.match(entry.getKey(), path)) {
                 List<String> allowedRoles = entry.getValue();
-                if (allowedRoles.contains("PUBLIC")) {
-                    return true; // 인증 없이 접근 가능
+
+                // 토큰이 아예 없는 사용자도 접근 허용 (PUBLIC 경로만)
+                if (role == null && path.contains("public")) {
+                    return true;
                 }
-                return allowedRoles.contains(auth); // 권한이 맞는지 체크
+
+                return role != null && allowedRoles.contains(role);
             }
         }
         return false; // 기본적으로 차단

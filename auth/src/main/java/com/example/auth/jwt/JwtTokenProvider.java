@@ -110,6 +110,7 @@ public class JwtTokenProvider implements InitializingBean {
                     .valid(true)
                     .tokenErrorReason(TokenValidationResult.TokenErrorReason.VALID)
                     .build();
+
         } catch (io.jsonwebtoken.security.SecurityException | MalformedJwtException e) {
             log.info("Invalid JWT Token", e);
             return TokenValidationResult.builder()

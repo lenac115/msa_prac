@@ -5,6 +5,7 @@ import com.example.auth.redis.RedisUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
@@ -20,6 +21,8 @@ import org.springframework.test.web.servlet.MvcResult;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.hibernate.validator.internal.util.Contracts.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -54,11 +57,11 @@ public class AuthIntegrationTest {
         MvcResult loginResult = mockMvc.perform(post("/auth/public/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                        {
-                            "email": "test@naver.com",
-                            "password": "1234"
-                        }
-                        """))
+                                {
+                                    "email": "test@naver.com",
+                                    "password": "1234"
+                                }
+                                """))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -71,19 +74,28 @@ public class AuthIntegrationTest {
         String savedRefreshToken = (String) redisUtils.get(redisKey);
         assertEquals(savedRefreshToken, tokenResponse.getRefreshToken());
 
-        byte[] secretBytes = secretKey.getBytes(StandardCharsets.UTF_8);
-        Key key = Keys.hmacShaKeyFor(secretBytes);
+        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
+        Key key = Keys.hmacShaKeyFor(keyBytes);
+
         String expiredAccessToken = Jwts.builder()
                 .setSubject("test@naver.com")
-                .claim("auth", "BUYER")
+                .claim("auth", "ROLE_BUYER")
                 .setExpiration(new Date(System.currentTimeMillis() - 1000)) // 이미 만료됨
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
 
+        Map<String, String> reissueRequest = new HashMap<>();
+        reissueRequest.put("accessToken", expiredAccessToken);
+        reissueRequest.put("tokenType", "Bearer");
+        reissueRequest.put("refreshToken", savedRefreshToken);
+
+        String json = objectMapper.writeValueAsString(reissueRequest);
         // when: 재발급 요청
-        MvcResult reissueResult = mockMvc.perform(post("/auth/public/reissue")
+        MvcResult reissueResult = mockMvc.perform(post("/auth/common/reissue")
                         .header("Authorization", "Bearer " + expiredAccessToken)
-                        .header("Refresh-Token", tokenResponse.getRefreshToken()))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .with(csrf())
+                        .content(json))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -102,14 +114,14 @@ public class AuthIntegrationTest {
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                {
-                    "email": "test@naver.com",
-                    "password": "1234",
-                    "name": "testName",
-                    "address": "testAddress",
-                    "phone": "testPhone",
-                    "auth": "BUYER"
-                }
-                """)).andExpect(status().isCreated());
+                        {
+                            "email": "test@naver.com",
+                            "password": "1234",
+                            "name": "testName",
+                            "address": "testAddress",
+                            "phone": "testPhone",
+                            "auth": "BUYER"
+                        }
+                        """)).andExpect(status().isCreated());
     }
 }
