@@ -34,7 +34,6 @@ public class JwtFilter extends OncePerRequestFilter {
                     // 유효한 토큰 처리
                     Authentication authentication = tokenProvider.getAuthentication(token);
                     SecurityContextHolder.getContext().setAuthentication(authentication);
-                    System.out.println("Authentication set: " + authentication.getName());
                 } else if (tokenProvider.isTokenExpired(token)) {
                     // Access Token 만료 시 처리
                     Boolean reissued = handleExpiredToken(request, response, token);

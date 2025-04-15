@@ -24,6 +24,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
@@ -232,16 +233,17 @@ public class UserServiceTest {
         // given
         String email = "testUser@naver.com";
         String password = "123456";
-
+        String encodedPassword = "encodedPassword";
         User mockUser = User.builder()
                 .email(email)
-                .password(password)
+                .password(encodedPassword)
                 .build();
 
         TokenResponse mockTokenResponse = new TokenResponse("mockAccessToken", "Bearer", "mockRefreshToken");
 
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(mockUser));
         when(tokenProvider.generateToken(any(Authentication.class))).thenReturn(mockTokenResponse);
+        when(passwordEncoder.matches(password, mockUser.getPassword())).thenReturn(true);
 
         // when
         TokenResponse tokenResponse = userService.login(email, password);
@@ -764,6 +766,7 @@ public class UserServiceTest {
         // given
         String accessToken = "accessToken";
         String refreshToken = "RT:testUser@naver.com";
+        String redisRefreshToken = "RT:testUser@naver.com";
 
         Authentication authentication = new TestingAuthenticationToken("testUser@naver.com", "password");
 
@@ -800,7 +803,7 @@ public class UserServiceTest {
                         .tokenErrorReason(TokenValidationResult.TokenErrorReason.INVALID)
                         .build());
         when(tokenProvider.getAuthentication(accessToken)).thenReturn(authentication);
-        when(redisUtils.get(refreshToken)).thenReturn(Optional.of(redisRefreshToken));
+        when(redisUtils.get(refreshToken)).thenReturn(redisRefreshToken);
 
         // when & then
         CustomException exception =
@@ -827,7 +830,7 @@ public class UserServiceTest {
                 .tokenErrorReason(TokenValidationResult.TokenErrorReason.VALID)
                 .build());
         when(tokenProvider.getAuthentication(accessToken)).thenReturn(authentication);
-        when(redisUtils.get(refreshToken)).thenReturn(Optional.of(redisRefreshToken));
+        when(redisUtils.get(refreshToken)).thenReturn(redisRefreshToken);
 
         // when & then
         CustomException exception =
@@ -855,7 +858,7 @@ public class UserServiceTest {
                 .tokenErrorReason(TokenValidationResult.TokenErrorReason.VALID)
                 .build());
         when(tokenProvider.getAuthentication(accessToken)).thenReturn(authentication);
-        when(redisUtils.get("RT:" + refreshToken)).thenReturn(Optional.of(redisRefreshToken));
+        when(redisUtils.get("RT:" + refreshToken)).thenReturn(redisRefreshToken);
         when(tokenProvider.generateToken(any(Authentication.class))).thenReturn(mockTokenResponse);
 
         // when

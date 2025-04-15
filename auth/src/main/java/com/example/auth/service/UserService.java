@@ -23,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -47,16 +46,18 @@ public class UserService {
 
         Authentication authentication = tokenProvider.getAuthentication(requestAccessToken);
 
-        Optional<String> refreshTokenOptional =
-                Optional.ofNullable((String) redisUtils.get("RT:" + authentication.getName()));
-        String refreshToken = refreshTokenOptional.orElseThrow(() -> new CustomException(UserErrorCode.REFRESH_TOKEN_NOT_FOUND_IN_REDIS));
+        String reidsRefreshToken = Optional.ofNullable(redisUtils.get("RT:" + authentication.getName()))
+                .filter(value -> value instanceof String)
+                .map(value -> (String) value)
+                .orElseThrow(() -> new CustomException(UserErrorCode.REFRESH_TOKEN_NOT_FOUND_IN_REDIS));
 
-        if (!tokenProvider.validateToken(refreshToken).getValid()) {
+
+        if (!tokenProvider.validateToken(reidsRefreshToken).getValid()) {
             redisUtils.delete("RT:" + authentication.getName());
             throw new CustomException(UserErrorCode.REFRESH_TOKEN_EXPIRED);
         }
 
-        if (!requestRefreshToken.equals(refreshToken)) {
+        if (!requestRefreshToken.equals(reidsRefreshToken)) {
             throw new CustomException(UserErrorCode.TOKEN_MISMATCH_BETWEEN_CLIENT_AND_SERVER);
         }
 
@@ -72,6 +73,7 @@ public class UserService {
 
         User findUser = userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(UserErrorCode.NOT_EXIST_EMAIL));
+
 
         if (!passwordEncoder.matches(password, findUser.getPassword())) {
             throw new CustomException(UserErrorCode.NOT_EQUAL_PASSWORD);
@@ -92,7 +94,7 @@ public class UserService {
         User findUser = userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(UserErrorCode.NOT_EXIST_EMAIL));
 
-        if(!tokenProvider.validateToken(accessToken).getValid()) {
+        if (!tokenProvider.validateToken(accessToken).getValid()) {
             throw new CustomException(UserErrorCode.INVALID_USER_TOKEN);
         }
 
@@ -119,7 +121,7 @@ public class UserService {
     }
 
     @Transactional
-    public void register(UserDto userDto) {
+    public User register(UserDto userDto) {
 
         if (userRepository.findByEmail(userDto.getEmail()).orElse(null) != null) {
             throw new CustomException(UserErrorCode.ALREADY_EXIST_EMAIL);
@@ -127,7 +129,7 @@ public class UserService {
         userDto.setPassword(passwordEncoder.encode(userDto.getPassword()));
 
         User registerUser = convertUserDto(userDto);
-        userRepository.save(registerUser);
+        return userRepository.save(registerUser);
     }
 
 
@@ -137,7 +139,7 @@ public class UserService {
         User findUser = userRepository.findByEmail(username)
                 .orElseThrow(() -> new CustomException(UserErrorCode.NOT_EXIST_EMAIL));
 
-        if(!tokenProvider.validateToken(accessToken).getValid()) {
+        if (!tokenProvider.validateToken(accessToken).getValid()) {
             throw new CustomException(UserErrorCode.INVALID_USER_TOKEN);
         }
 
@@ -170,11 +172,11 @@ public class UserService {
         User findUser = userRepository.findByEmail(username)
                 .orElseThrow(() -> new CustomException(UserErrorCode.NOT_EXIST_EMAIL));
 
-        if(!passwordEncoder.matches(changePasswordReq.getNewPassword(), findUser.getPassword())) {
+        if (!passwordEncoder.matches(changePasswordReq.getNewPassword(), findUser.getPassword())) {
             throw new CustomException(UserErrorCode.NOT_EQUAL_PASSWORD);
         }
 
-        if(!tokenProvider.validateToken(accessToken).getValid()) {
+        if (!tokenProvider.validateToken(accessToken).getValid()) {
             throw new CustomException(UserErrorCode.INVALID_USER_TOKEN);
         }
 
@@ -186,7 +188,7 @@ public class UserService {
 
     @Transactional
     public void resetPassword(String token, String newPassword) {
-        if(!redisUtils.hasKey(token)) {
+        if (!redisUtils.hasKey(token)) {
             throw new CustomException(CommonErrorCode.INVALID_PARAMETER);
         }
 
@@ -215,7 +217,7 @@ public class UserService {
     public Long getUserId(String username) {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if(!authentication.getName().equals(username)) {
+        if (!authentication.getName().equals(username)) {
             throw new CustomException(UserErrorCode.NOT_ACCOUNT_AUTH);
         }
 
@@ -228,7 +230,7 @@ public class UserService {
 
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if(!authentication.getName().equals(username)) {
+        if (!authentication.getName().equals(username)) {
             throw new CustomException(UserErrorCode.NOT_ACCOUNT_AUTH);
         }
 
