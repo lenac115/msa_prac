@@ -86,6 +86,12 @@ public class OrderService {
                 .build());
     }
 
+    @Transactional(readOnly = true)
+    public OrderDto getOrder(Long orderId) {
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new RuntimeException("존재하지 않는 주문"));
+        return convertToDto(order);
+    }
+
     private OrderDto convertToDto(Order order) {
         return OrderDto.builder()
                 .id(order.getId())

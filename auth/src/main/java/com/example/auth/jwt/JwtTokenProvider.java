@@ -50,6 +50,7 @@ public class JwtTokenProvider implements InitializingBean {
                 .map(role -> role.replace("ROLE_", ""))
                 .collect(Collectors.joining(","));
 
+        System.out.println("authorities: " + authorities);
         long now = (new Date()).getTime();
         // Access Token 생성
         Date accessTokenExpiresIn = new Date(now + 3600000);
@@ -139,9 +140,9 @@ public class JwtTokenProvider implements InitializingBean {
     }
 
     private Claims parseClaims(String accessToken) {
-        //String realToken = accessToken.replace("Bearer ", "");
+        String realToken = accessToken.replace("Bearer ", "");
         try {
-            return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(accessToken).getBody();
+            return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(realToken).getBody();
         } catch (ExpiredJwtException e) {
             return e.getClaims();
         }

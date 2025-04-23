@@ -24,6 +24,13 @@ public class PaymentController {
                 .body(paymentService.getPayment(paymentId));
     }
 
+    @GetMapping("/order/{orderId}")
+    public ResponseEntity<PaymentDto> getPaymentByOrderId(@PathVariable Long orderId) {
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(paymentService.getPaymentByOrderId(orderId));
+    }
+
     @PostMapping("/delete/{paymentId}")
     public ResponseEntity<Object> deletePayment(@PathVariable Long paymentId) {
 

@@ -106,9 +106,9 @@ public class JwtTokenProvider implements InitializingBean {
     }
 
     public Claims parseClaims(String accessToken) {
-        //String realToken = accessToken.replace("Bearer ", "");
+        String realToken = accessToken.replace("Bearer ", "");
         try {
-            return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(accessToken).getBody();
+            return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(realToken).getBody();
         } catch (ExpiredJwtException e) {
             return e.getClaims();
         }

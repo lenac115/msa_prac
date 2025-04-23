@@ -38,6 +38,12 @@ public class PaymentService {
         return convertPaymentDto(payment);
     }
 
+    public PaymentDto getPaymentByOrderId(Long orderId) {
+
+        Payment payment = paymentRepository.findByOrderId(orderId, Payment.Status.PENDING).orElseThrow();
+        return convertPaymentDto(payment);
+    }
+
     @Transactional
     public void createPayment(PaymentCreatedEvent event) {
 

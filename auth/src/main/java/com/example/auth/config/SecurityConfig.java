@@ -3,19 +3,18 @@ package com.example.auth.config;
 import com.example.auth.jwt.JwtAuthenticationEntryPoint;
 import com.example.auth.jwt.JwtSecurityConfig;
 import com.example.auth.jwt.JwtTokenProvider;
-import com.example.auth.redis.RedisUtils;
-import com.example.auth.service.UserService;
+import com.example.auth.service.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
@@ -27,8 +26,8 @@ public class SecurityConfig {
 
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtTokenProvider tokenProvider;
-    private final UserService userService;
-    private final RedisUtils redisUtils;
+    private final CustomUserDetailsService customUserDetailsService;
+    private final PasswordEncoder passwordEncoder;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
@@ -52,10 +51,18 @@ public class SecurityConfig {
                         .ignoringRequestMatchers("/auth/**"))
                 .sessionManagement((session) -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .with(new JwtSecurityConfig(tokenProvider, userService, redisUtils), Customizer.withDefaults());
+                .with(new JwtSecurityConfig(tokenProvider), Customizer.withDefaults());
                 /*.cors((cors) -> cors
                         .configurationSource(corsConfigurationSource()));*/
 
         return httpSecurity.build();
+    }
+
+    @Bean
+    public DaoAuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(customUserDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder);
+        return authProvider;
     }
 }

@@ -62,6 +62,7 @@ public class JwtFilter implements GatewayFilter {
         // 권한 검사
         if (!isAuthorized(path, auth)) {
             System.out.println("권한 검사 실패");
+            System.out.println(auth);
             return handleError(exchange, HttpStatus.FORBIDDEN);
         }
 
@@ -112,9 +113,11 @@ public class JwtFilter implements GatewayFilter {
         roleMappings.put("/order/seller/**", List.of("SELLER"));  // SELLER 전용
         roleMappings.put("/order/common/**", List.of("BUYER", "SELLER")); // BUYER & SELLER 둘 다 가능
         // Payment Service (결제 관련)
+        roleMappings.put("/payment/public/reset", List.of("PUBLIC"));
         roleMappings.put("/payment/**", List.of("BUYER")); // BUYER만 결제 가능
 
         // Product Service (판매자 전용)
+        roleMappings.put("/product/public/reset", List.of("PUBLIC"));
         roleMappings.put("/product/**", List.of("SELLER")); // SELLER만 접근 가능
 
         for (Map.Entry<String, List<String>> entry : roleMappings.entrySet()) {

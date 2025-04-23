@@ -1,6 +1,7 @@
 package com.example.order.controller;
 
 import com.example.order.dto.NewOrder;
+import com.example.order.dto.OrderDto;
 import com.example.order.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -27,5 +28,11 @@ public class OrderController {
                                               @RequestHeader("Authorization") String authorizationHeader) {
         orderService.createOrder(orders, authorizationHeader);
         return ResponseEntity.status(HttpStatus.CREATED).body("생성 완료");
+    }
+
+    @GetMapping("/{orderId}")
+    public ResponseEntity<OrderDto> getOrder(@PathVariable("orderId") Long orderId) {
+
+        return ResponseEntity.status(HttpStatus.OK).body(orderService.getOrder(orderId));
     }
 }

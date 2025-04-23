@@ -13,6 +13,9 @@ import com.example.auth.repository.UserRepository;
 import com.example.auth.uuid.BasicUUIDGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -37,6 +40,7 @@ public class UserService {
     private final RedisUtils redisUtils;
     private final PasswordEncoder passwordEncoder;
     private final BasicUUIDGenerator uuidGenerator;
+    private final AuthenticationManager authenticationManager;
 
     @Transactional
     public TokenResponse reissue(String requestAccessToken, String requestRefreshToken) {
@@ -79,7 +83,8 @@ public class UserService {
             throw new CustomException(UserErrorCode.NOT_EQUAL_PASSWORD);
         }
 
-        Authentication authentication = new UsernamePasswordAuthenticationToken(email, password);
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(email, password));
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         TokenResponse tokenResponse = tokenProvider.generateToken(authentication);
@@ -121,15 +126,15 @@ public class UserService {
     }
 
     @Transactional
-    public User register(UserDto userDto) {
+    public void register(UserDto userDto) {
 
-        if (userRepository.findByEmail(userDto.getEmail()).orElse(null) != null) {
+        if (userRepository.findByEmail(userDto.getEmail()).isPresent()) {
             throw new CustomException(UserErrorCode.ALREADY_EXIST_EMAIL);
         }
         userDto.setPassword(passwordEncoder.encode(userDto.getPassword()));
 
         User registerUser = convertUserDto(userDto);
-        return userRepository.save(registerUser);
+        userRepository.save(registerUser);
     }
 
 
@@ -245,6 +250,7 @@ public class UserService {
                 .password(userDto.getPassword())
                 .name(userDto.getName())
                 .id(userDto.getId())
+                .auth(userDto.getAuth())
                 .address(userDto.getAddress())
                 .build();
     }
@@ -255,6 +261,7 @@ public class UserService {
                 .phone(user.getPhone())
                 .email(user.getEmail())
                 .name(user.getName())
+                .auth(user.getAuth())
                 .address(user.getAddress())
                 .build();
     }

@@ -15,8 +15,8 @@ public class SecurityConfig {
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchange -> exchange
-                        .pathMatchers("/auth/public/**", "/order/public/**").permitAll()
-                        .anyExchange().permitAll() // ✅ 어차피 필터로 따로 검사 중이라면 이렇게 열어둬도 됨
+                        .pathMatchers("/auth/public/**", "/order/public/**", "/test/**").permitAll()
+                        .anyExchange().permitAll()
                 )
                 .build();
     }

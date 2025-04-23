@@ -1,2 +1,6 @@
 /.env
 /auth/src/test/resources/application-test.yml
+/auth/src/main/resources/application-test.yml
+/order/src/main/resources/application-test.yml
+/product/src/main/resources/application-test.yml
+/payment/src/main/resources/application-test.yml
