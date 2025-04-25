@@ -1,6 +1,6 @@
 package com.example.product.domain;
 
-import com.example.product.dto.ProductDto;
+import com.example.commonevents.product.ProductDto;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;

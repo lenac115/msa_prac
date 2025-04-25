@@ -1,11 +1,10 @@
 package com.example.auth;
 
-import com.example.auth.dto.TokenResponse;
 import com.example.auth.jwt.JwtTokenProvider;
 import com.example.auth.jwt.TokenValidationResult;
 import com.example.auth.redis.RedisUtils;
+import com.example.commonevents.auth.TokenResponse;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -19,7 +18,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 

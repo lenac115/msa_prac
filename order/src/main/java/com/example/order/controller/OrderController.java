@@ -1,7 +1,7 @@
 package com.example.order.controller;
 
-import com.example.order.dto.NewOrder;
-import com.example.order.dto.OrderDto;
+import com.example.commonevents.order.NewOrder;
+import com.example.commonevents.order.OrderDto;
 import com.example.order.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -24,10 +24,10 @@ public class OrderController {
     }
 
     @PostMapping("/buyer/create")
-    public ResponseEntity<String> createOrder(@RequestBody List<NewOrder> orders,
+    public ResponseEntity<OrderDto> createOrder(@RequestBody List<NewOrder> orders,
                                               @RequestHeader("Authorization") String authorizationHeader) {
-        orderService.createOrder(orders, authorizationHeader);
-        return ResponseEntity.status(HttpStatus.CREATED).body("생성 완료");
+        OrderDto orderDto = orderService.createOrder(orders, authorizationHeader);
+        return ResponseEntity.status(HttpStatus.CREATED).body(orderDto);
     }
 
     @GetMapping("/{orderId}")

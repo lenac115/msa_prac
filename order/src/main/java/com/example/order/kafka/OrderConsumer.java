@@ -1,7 +1,7 @@
 package com.example.order.kafka;
 
-import com.example.order.dto.OrderFailedEvent;
-import com.example.order.dto.PaymentCompletedEvent;
+import com.example.commonevents.order.OrderFailedEvent;
+import com.example.commonevents.payment.PaymentCompletedEvent;
 import com.example.order.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -51,7 +51,7 @@ public class SecurityConfig {
                         .ignoringRequestMatchers("/auth/**"))
                 .sessionManagement((session) -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .with(new JwtSecurityConfig(tokenProvider), Customizer.withDefaults());
+                .with(new JwtSecurityConfig(tokenProvider, customUserDetailsService), Customizer.withDefaults());
                 /*.cors((cors) -> cors
                         .configurationSource(corsConfigurationSource()));*/
 

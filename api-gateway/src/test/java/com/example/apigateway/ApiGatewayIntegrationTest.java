@@ -28,10 +28,6 @@ class ApiGatewayIntegrationTest {
 
     private ObjectMapper objectMapper = new ObjectMapper();
 
-    static final String AUTH_URL = "http://localhost:8081";
-    static final String ORDER_URL = "http://localhost:8082";
-    static final String PAYMENT_URL = "http://localhost:8083";
-    static final String PRODUCT_URL = "http://localhost:8084";
     static final String API_URL = "http://localhost:8080";
 
     @BeforeEach
@@ -79,7 +75,7 @@ class ApiGatewayIntegrationTest {
                 }
                 """;
 
-        webTestClient.post().uri(AUTH_URL + "/auth/public/register")
+        webTestClient.post().uri(API_URL + "/auth/public/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(registerPayload)
                 .exchange()
@@ -93,7 +89,7 @@ class ApiGatewayIntegrationTest {
                 }
                 """;
 
-        byte[] responseBody = webTestClient.post().uri(AUTH_URL + "/auth/public/login")
+        byte[] responseBody = webTestClient.post().uri(API_URL + "/auth/public/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(loginPayload)
                 .exchange()
@@ -114,15 +110,22 @@ class ApiGatewayIntegrationTest {
                     "stock": 10000
                 }
                 """;
-        webTestClient.post().uri(PRODUCT_URL + "/product/new")
+        byte[] productResponseBody = webTestClient.post().uri(API_URL + "/product/new")
                 .header("Authorization", "Bearer " + accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(productCreatePayload)
                 .exchange()
-                .expectStatus().isCreated();
+                .expectStatus().isCreated()
+                .expectBody()
+                .returnResult()
+                .getResponseBodyContent();
+
+        JsonNode productJson = objectMapper.readTree(productResponseBody);
+        Long productId = productJson.get("id").asLong();
+        System.out.println("productId = " + productId);
 
         // 4. 로그아웃
-        webTestClient.post().uri(AUTH_URL + "/auth/common/logout")
+        webTestClient.post().uri(API_URL + "/auth/common/logout")
                 .header("Authorization", "Bearer " + accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .exchange()
@@ -133,14 +136,14 @@ class ApiGatewayIntegrationTest {
                 {
                     "email": "buyer@test.com",
                     "password": "1234",
-                    "name": "Test User",
-                    "address": "Test Address",
-                    "phone": "000-0000-0000",
+                    "name": "Test User2",
+                    "address": "Test Address2",
+                    "phone": "000-0000-00002",
                     "auth": "BUYER"
                 }
                 """;
 
-        webTestClient.post().uri(AUTH_URL + "/auth/public/register")
+        webTestClient.post().uri(API_URL + "/auth/public/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(registerBuyerPayload)
                 .exchange()
@@ -154,65 +157,99 @@ class ApiGatewayIntegrationTest {
                 }
                 """;
 
-        String buyerAccessToken = webTestClient.post().uri(AUTH_URL + "/auth/public/login")
+        byte[] buyerResponseBody = webTestClient.post().uri(API_URL + "/auth/public/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(loginBuyerPayload)
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody()
-                .jsonPath("$.accessToken").value(Matchers.notNullValue())
                 .returnResult()
-                .getResponseBodyContent().toString();
+                .getResponseBodyContent();
+
+        JsonNode buyerJson = objectMapper.readTree(buyerResponseBody);
+        String buyerAccessToken = buyerJson.get("accessToken").asText();
 
         // 3. 주문 요청
         String orderPayload = """
-                {
-                    "productId": 1,
-                    "quantity": 2,
-                    "amount": 1
-                }
-                """;
+                [
+                    {
+                        "productId": %d,
+                        "quantity": 2,
+                        "amount": 20000
+                    }
+                ]
+                """.formatted(productId);
 
-        webTestClient.post().uri(ORDER_URL + "/order/buyer/create")
+        byte[] orderResponseBody = webTestClient.post().uri(API_URL + "/order/buyer/create")
                 .header("Authorization", "Bearer " + buyerAccessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(orderPayload)
                 .exchange()
-                .expectStatus().isCreated();
+                .expectStatus().isCreated()
+                .expectBody()
+                .returnResult()
+                .getResponseBodyContent();
 
-        // 4. 결제
+        JsonNode orderJson = objectMapper.readTree(orderResponseBody);
+        Long orderId = orderJson.get("id").asLong();
+
+        // 4. 결제 생성
+        String newPaymentPayload = """
+                
+                    {
+                        "orderId": %d,
+                        "buyerId": 1,
+                        "amount": 20000,
+                        "paymentKey": "test-paymentKey"
+                    }
+                
+                """.formatted(orderId);
+
+        byte[] paymentResponseBody = webTestClient.post().uri(API_URL + "/payment/new")
+                .header("Authorization", "Bearer " + buyerAccessToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(newPaymentPayload)
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody()
+                .returnResult()
+                .getResponseBodyContent();
+
+        JsonNode newPaymentJson = objectMapper.readTree(paymentResponseBody);
+        String paymentKey = newPaymentJson.get("id").asText();
+
+        // 5. 결제 확인
         AtomicReference<String> paymentKeyRef = new AtomicReference<>();
 
         Awaitility.await()
                 .atMost(Duration.ofSeconds(5))
                 .pollInterval(Duration.ofMillis(500))
                 .untilAsserted(() -> {
-                    String body = webTestClient.get().uri(PAYMENT_URL + "/payments/order/1")
+                    byte[] body = webTestClient.get().uri(API_URL + "/payment/order/" + orderId)
                             .header("Authorization", "Bearer " + buyerAccessToken)
                             .exchange()
                             .expectStatus().isOk()
                             .expectBody()
                             .jsonPath("$.paymentKey").value(Matchers.notNullValue())
                             .returnResult()
-                            .getResponseBodyContent().toString();
+                            .getResponseBodyContent();
 
                     // JSON 파싱해서 paymentKey 추출
-                    ObjectMapper objectMapper = new ObjectMapper();
                     JsonNode root = objectMapper.readTree(body);
-                    String paymentKey = root.get("paymentKey").asText();
-                    paymentKeyRef.set(paymentKey);
+                    String findPaymentKey = root.get("paymentKey").asText();
+                    paymentKeyRef.set(findPaymentKey);
                 });
 
         String paymentPayload = String.format("""
                 {
-                    "orderId": 1,
+                    "orderId": %d,
                     "paymentKey": "%s",
                     "amount": 1
                 }
-                """, paymentKeyRef.get());
+                """.formatted(orderId, paymentKeyRef.get()));
 
 
-        webTestClient.post().uri(PAYMENT_URL + "/payments")
+        webTestClient.post().uri(API_URL + "/payment/confirm")
                 .header("Authorization", "Bearer " + buyerAccessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(paymentPayload)
@@ -220,7 +257,7 @@ class ApiGatewayIntegrationTest {
                 .expectStatus().isOk();
 
         // 5. 주문 상태 확인
-        webTestClient.get().uri(ORDER_URL + "/orders/1")
+        webTestClient.get().uri(API_URL + "/order/1")
                 .header("Authorization", "Bearer " + buyerAccessToken)
                 .exchange()
                 .expectStatus().isOk()

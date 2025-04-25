@@ -1,0 +1,71 @@
+plugins {
+    id 'org.springframework.boot' version '3.4.2' apply false  // 모든 하위 모듈에 상속되지 않도록 false 설정
+    id 'io.spring.dependency-management' version '1.1.7' apply false
+}
+
+subprojects {
+    apply plugin: "org.springframework.boot"
+    apply plugin: "io.spring.dependency-management"
+    apply plugin: 'java-library'
+    apply plugin: "java"
+
+    group = "com.example"  // 실제 프로젝트 그룹명으로 변경 필요
+    version = "0.0.1-SNAPSHOT"  // 프로젝트 버전에 맞게 변경
+    sourceCompatibility = "17"  // Java 버전에 맞게 조정 (11 또는 17 등)
+
+    repositories {
+        mavenCentral()
+    }
+
+    configurations {
+        compileOnly {
+            extendsFrom annotationProcessor
+        }
+    }
+
+    dependencies {
+        // 공통 의존성
+        implementation 'org.springframework.boot:spring-boot-starter'
+        compileOnly 'org.projectlombok:lombok'
+        annotationProcessor 'org.projectlombok:lombok'
+        testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    }
+
+    tasks.named('test') {
+        useJUnitPlatform()
+    }
+}
+
+apply plugin: 'org.springframework.boot'
+apply plugin: 'java'
+
+// 루트 프로젝트 설정
+bootJar { enabled = false }
+jar { enabled = false }
+
+// 공통 모듈 설정
+project(":common-events") {
+    bootJar { enabled = false }
+    jar { enabled = true }
+
+    dependencies {
+        // 공통 모듈에 필요한 추가 의존성
+        implementation 'org.springframework.boot:spring-boot-starter-web'
+        implementation 'org.springframework.kafka:spring-kafka'  // 이벤트 처리용 (필요시)
+        implementation 'org.projectlombok:lombok'
+        annotationProcessor 'org.projectlombok:lombok'
+    }
+}
+
+// 각 마이크로서비스 모듈 설정
+["auth", "payment", "order", "product", "api-gateway"].each { module ->
+    project(":${module}") {
+        bootJar { enabled = true }
+        jar { enabled = true }
+
+        dependencies {
+            implementation project(":common-events")
+            implementation 'org.springframework.boot:spring-boot-starter-web'
+        }
+    }
+}

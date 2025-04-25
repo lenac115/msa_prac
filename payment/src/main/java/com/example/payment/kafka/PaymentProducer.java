@@ -1,8 +1,8 @@
 package com.example.payment.kafka;
 
-import com.example.payment.dto.PaymentCompletedEvent;
-import com.example.payment.dto.PaymentDto;
-import com.example.payment.dto.StockRestoreEvent;
+import com.example.commonevents.payment.PaymentCompletedEvent;
+import com.example.commonevents.payment.PaymentDto;
+import com.example.commonevents.payment.StockRestoreEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;

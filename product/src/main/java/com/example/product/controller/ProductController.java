@@ -1,10 +1,9 @@
 package com.example.product.controller;
 
-import com.example.product.dto.ProductDto;
+import com.example.commonevents.product.ProductDto;
 import com.example.product.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.coyote.Response;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;

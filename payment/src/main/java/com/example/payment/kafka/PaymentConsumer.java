@@ -1,7 +1,6 @@
 package com.example.payment.kafka;
 
-import com.example.payment.dto.PaymentConfirmRequest;
-import com.example.payment.dto.PaymentCreatedEvent;
+import com.example.commonevents.payment.PaymentConfirmRequest;
 import com.example.payment.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,11 +20,5 @@ public class PaymentConsumer {
     public void handlePayment(PaymentConfirmRequest request) throws IOException {
         log.info("Received Kafka message: {}", request);
         paymentService.processPaymentRequest(request);
-    }
-
-    @KafkaListener(topics = "payment-created-topic", groupId = "payment-create-group")
-    public void handleCreatePayment(PaymentCreatedEvent event) {
-        log.info("Received Kafka message: {}", event);
-        paymentService.createPayment(event);
     }
 }

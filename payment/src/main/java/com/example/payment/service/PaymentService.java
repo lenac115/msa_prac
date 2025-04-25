@@ -1,6 +1,6 @@
 package com.example.payment.service;
 
-import com.example.payment.dto.*;
+import com.example.commonevents.payment.*;
 import com.example.payment.domain.Payment;
 import com.example.payment.kafka.PaymentProducer;
 import com.example.payment.repository.PaymentRepository;
@@ -17,7 +17,6 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Base64;
-import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -39,22 +38,24 @@ public class PaymentService {
     }
 
     public PaymentDto getPaymentByOrderId(Long orderId) {
-
-        Payment payment = paymentRepository.findByOrderId(orderId, Payment.Status.PENDING).orElseThrow();
+        System.out.println("orderId : " +orderId);
+        Payment payment = paymentRepository.findByOrderId(orderId, Status.PENDING)
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 결제입니다."));
         return convertPaymentDto(payment);
     }
 
     @Transactional
-    public void createPayment(PaymentCreatedEvent event) {
+    public PaymentDto createPayment(PaymentCreatedEvent event) {
 
         Payment payment = Payment.builder()
                 .amount(event.getAmount())
                 .orderId(event.getOrderId())
                 .createdAt(LocalDateTime.now())
                 .buyerId(event.getBuyerId())
-                .status(Payment.Status.PENDING)
+                .paymentKey(event.getPaymentKey())
+                .status(Status.PENDING)
                 .build();
-        paymentRepository.save(payment);
+        return convertPaymentDto(paymentRepository.save(payment));
     }
 
     @Transactional
@@ -63,9 +64,9 @@ public class PaymentService {
         Payment payment = sendToTossPayments(request);
 
         // 결제 상태에 따라 처리 분기
-        if (payment.getStatus() == Payment.Status.PAID) {
+        if (payment.getStatus() == Status.PAID) {
             processPaymentSuccess(payment);
-        } else if (payment.getStatus() == Payment.Status.FAILED) {
+        } else if (payment.getStatus() == Status.FAILED) {
             processPaymentFailure(payment);
         }
     }
@@ -105,7 +106,7 @@ public class PaymentService {
 
     @Transactional
     public void processPaymentSuccess(Payment payment) {
-        payment.updateStatus(Payment.Status.PAID);
+        payment.updateStatus(Status.PAID);
 
         paymentProducer.sendPaymentSuccess(convertPaymentDto(payment));
 
@@ -115,7 +116,7 @@ public class PaymentService {
 
     @Transactional
     public void processPaymentFailure(Payment payment) {
-        payment.updateStatus(Payment.Status.FAILED);
+        payment.updateStatus(Status.FAILED);
 
         paymentProducer.sendPaymentFailure(convertPaymentDto(payment));
 

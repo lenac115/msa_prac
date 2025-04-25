@@ -1,7 +1,8 @@
 package com.example.payment.controller;
 
-import com.example.payment.dto.PaymentConfirmRequest;
-import com.example.payment.dto.PaymentDto;
+import com.example.commonevents.payment.PaymentConfirmRequest;
+import com.example.commonevents.payment.PaymentCreatedEvent;
+import com.example.commonevents.payment.PaymentDto;
 import com.example.payment.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -26,9 +27,10 @@ public class PaymentController {
 
     @GetMapping("/order/{orderId}")
     public ResponseEntity<PaymentDto> getPaymentByOrderId(@PathVariable Long orderId) {
-
+        PaymentDto paymentDto = paymentService.getPaymentByOrderId(orderId);
+        System.out.println(paymentDto.getPaymentKey());
         return ResponseEntity.status(HttpStatus.OK)
-                .body(paymentService.getPaymentByOrderId(orderId));
+                .body(paymentDto);
     }
 
     @PostMapping("/delete/{paymentId}")
@@ -37,6 +39,13 @@ public class PaymentController {
         paymentService.cancel(paymentId);
         return ResponseEntity.status(HttpStatus.OK)
                 .body("취소 완료");
+    }
+
+    @PostMapping("/new")
+    public ResponseEntity<Object> newPayment(@RequestBody PaymentCreatedEvent event) {
+
+        PaymentDto paymentDto = paymentService.createPayment(event);
+        return ResponseEntity.status(HttpStatus.CREATED).body(paymentDto);
     }
 
     @PostMapping("/confirm")

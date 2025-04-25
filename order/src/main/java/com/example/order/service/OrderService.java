@@ -1,9 +1,10 @@
 package com.example.order.service;
 
+import com.example.commonevents.order.*;
+import com.example.commonevents.payment.PaymentCompletedEvent;
 import com.example.order.client.AuthServiceClient;
 import com.example.order.domain.Order;
 import com.example.order.domain.OrderedProduct;
-import com.example.order.dto.*;
 import com.example.order.kafka.OrderProducer;
 import com.example.order.repository.OrderRepository;
 import com.example.order.repository.OrderedProductRepository;
@@ -28,9 +29,9 @@ public class OrderService {
     private final AuthServiceClient authServiceClient;
     private final OrderProducer orderProducer;
 
-    public void createOrder(List<NewOrder> NewOrders, String authorizationHeader) {
+    public OrderDto createOrder(List<NewOrder> NewOrders, String authorizationHeader) {
         Order created = Order.builder()
-                .status(Order.Status.PENDING)
+                .status(Status.PENDING)
                 .buyerId(authServiceClient.getBuyerId(authorizationHeader))
                 .build();
 
@@ -38,13 +39,14 @@ public class OrderService {
             OrderedProduct orderedProduct = OrderedProduct.builder()
                     .productId(newOrder.getProductId())
                     .quantity(newOrder.getQuantity())
+                    .price(newOrder.getAmount() / newOrder.getQuantity())
                     .order(created)
                     .build();
             created.getOrderedProductList().add(orderedProduct);
             orderedProductRepository.save(orderedProduct);
         }
 
-        orderRepository.save(created);
+        Order createdOrder = orderRepository.save(created);
 
         orderProducer.sendOrderCreatedEvent(OrderCreatedEvent.builder()
                 .orderId(created.getId())
@@ -54,30 +56,31 @@ public class OrderService {
                 .eventId(UUID.randomUUID().toString())
                 .eventType("ORDER_CREATED")
                 .build());
+        return convertToDto(createdOrder);
     }
 
     public void processOrderFailure(PaymentCompletedEvent event) {
 
         Order order = orderRepository.findById(event.getOrderId()).orElseThrow(() -> new RuntimeException("존재하지 않는 주문"));
-        order.updateStatus(Order.Status.FAILED);
+        order.updateStatus(Status.FAILED);
     }
 
     public void processOrderFailure(OrderFailedEvent event) {
 
         Order order = orderRepository.findById(event.getOrderId()).orElseThrow(() -> new RuntimeException("존재하지 않는 주문"));
-        order.updateStatus(Order.Status.FAILED);
+        order.updateStatus(Status.FAILED);
     }
 
     public void processOrderSuccess(PaymentCompletedEvent event) {
 
         Order order = orderRepository.findById(event.getOrderId()).orElseThrow(() -> new RuntimeException("존재하지 않는 주문"));
-        order.updateStatus(Order.Status.PAID);
+        order.updateStatus(Status.PAID);
     }
 
     public void cancelOrder(Long orderId) {
 
         Order order = orderRepository.findById(orderId).orElseThrow(() -> new RuntimeException("존재하지 않는 주문"));
-        order.updateStatus(Order.Status.CANCELED);
+        order.updateStatus(Status.CANCELED);
         orderProducer.sendOrderCancelledEvent(OrderCancelledEvent.builder()
                 .orderedProducts(order.getOrderedProductList().stream().map(this::convertToDto).collect(Collectors.toList()))
                 .timestamp(Instant.now())

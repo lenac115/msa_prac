@@ -1,16 +1,15 @@
 package com.example.auth.controller;
 
-import com.example.auth.dto.ChangePasswordReq;
-import com.example.auth.dto.ResetPasswordReq;
-import com.example.auth.dto.TokenResponse;
-import com.example.auth.dto.UserDto;
 import com.example.auth.kafka.UserEventProducer;
 import com.example.auth.service.EmailService;
 import com.example.auth.service.UserService;
+import com.example.commonevents.auth.ChangePasswordReq;
+import com.example.commonevents.auth.ResetPasswordReq;
+import com.example.commonevents.auth.TokenResponse;
+import com.example.commonevents.auth.UserDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;

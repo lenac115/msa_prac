@@ -1,6 +1,7 @@
 package com.example.auth.domain;
 
-import com.example.auth.dto.UserDto;
+import com.example.commonevents.auth.Auth;
+import com.example.commonevents.auth.UserDto;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -27,7 +28,7 @@ public class User {
     private String phone;
 
     @Enumerated(EnumType.STRING)
-    private User.Auth auth;
+    private Auth auth;
 
     public void updateUser(UserDto userDto) {
 
@@ -38,10 +39,5 @@ public class User {
 
     public void updatePassword(String password) {
         this.password = password;
-    }
-
-    public enum Auth {
-        SELLER,
-        BUYER
     }
 }

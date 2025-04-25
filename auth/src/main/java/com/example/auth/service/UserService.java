@@ -1,9 +1,6 @@
 package com.example.auth.service;
 
 import com.example.auth.domain.User;
-import com.example.auth.dto.ChangePasswordReq;
-import com.example.auth.dto.TokenResponse;
-import com.example.auth.dto.UserDto;
 import com.example.auth.exception.CustomException;
 import com.example.auth.exception.errorcode.CommonErrorCode;
 import com.example.auth.exception.errorcode.UserErrorCode;
@@ -11,10 +8,11 @@ import com.example.auth.jwt.JwtTokenProvider;
 import com.example.auth.redis.RedisUtils;
 import com.example.auth.repository.UserRepository;
 import com.example.auth.uuid.BasicUUIDGenerator;
+import com.example.commonevents.auth.ChangePasswordReq;
+import com.example.commonevents.auth.TokenResponse;
+import com.example.commonevents.auth.UserDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -98,7 +96,6 @@ public class UserService {
 
         User findUser = userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(UserErrorCode.NOT_EXIST_EMAIL));
-
         if (!tokenProvider.validateToken(accessToken).getValid()) {
             throw new CustomException(UserErrorCode.INVALID_USER_TOKEN);
         }

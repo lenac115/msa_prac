@@ -1,9 +1,6 @@
 package com.example.auth;
 
 import com.example.auth.domain.User;
-import com.example.auth.dto.ChangePasswordReq;
-import com.example.auth.dto.TokenResponse;
-import com.example.auth.dto.UserDto;
 import com.example.auth.exception.CustomException;
 import com.example.auth.exception.errorcode.CommonErrorCode;
 import com.example.auth.exception.errorcode.UserErrorCode;
@@ -14,6 +11,10 @@ import com.example.auth.repository.UserRepository;
 import com.example.auth.service.EmailService;
 import com.example.auth.service.UserService;
 import com.example.auth.uuid.BasicUUIDGenerator;
+import com.example.commonevents.auth.Auth;
+import com.example.commonevents.auth.ChangePasswordReq;
+import com.example.commonevents.auth.TokenResponse;
+import com.example.commonevents.auth.UserDto;
 import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,7 +25,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
@@ -84,7 +84,7 @@ public class UserServiceTest {
                 .phone("01012345678")
                 .email("testUser@naver.com")
                 .name("테스트")
-                .auth(User.Auth.BUYER)
+                .auth(Auth.BUYER)
                 .password("123456")
                 .address("테스트 주소")
                 .build();
@@ -94,7 +94,7 @@ public class UserServiceTest {
                 .name(request.getName())
                 .phone(request.getPhone())
                 .email(request.getEmail())
-                .auth(User.Auth.BUYER)
+                .auth(Auth.BUYER)
                 .password(request.getPassword())
                 .build();
         when(userRepository.findByEmail(request.getEmail())).thenReturn(Optional.empty());
@@ -120,7 +120,7 @@ public class UserServiceTest {
                 .phone("01012345678")
                 .email("testUser@naver.com")
                 .name("테스트")
-                .auth(User.Auth.BUYER)
+                .auth(Auth.BUYER)
                 .password("123456")
                 .address("테스트 주소")
                 .build();
@@ -130,7 +130,7 @@ public class UserServiceTest {
                 .name(request.getName())
                 .phone(request.getPhone())
                 .email(request.getEmail())
-                .auth(User.Auth.BUYER)
+                .auth(Auth.BUYER)
                 .password(request.getPassword())
                 .build();
 
@@ -152,7 +152,7 @@ public class UserServiceTest {
                 .name("테스트 수정")
                 .phone("01098765432")
                 .address("수정된 주소")
-                .auth(User.Auth.BUYER)
+                .auth(Auth.BUYER)
                 .password("123456")
                 .build();
 
@@ -174,7 +174,7 @@ public class UserServiceTest {
                 .name("테스트 수정")
                 .phone("01098765432")
                 .address("수정된 주소")
-                .auth(User.Auth.BUYER)
+                .auth(Auth.BUYER)
                 .password("123456")
                 .build();
 
@@ -183,7 +183,7 @@ public class UserServiceTest {
                 .name("테스트")
                 .phone("01012345678")
                 .address("테스트 주소")
-                .auth(User.Auth.BUYER)
+                .auth(Auth.BUYER)
                 .password("123456")
                 .build();
 
@@ -205,7 +205,7 @@ public class UserServiceTest {
                 .name("테스트")
                 .phone("01012345678")
                 .address("테스트 주소")
-                .auth(User.Auth.BUYER)
+                .auth(Auth.BUYER)
                 .password("123456")
                 .build();
 
@@ -214,7 +214,7 @@ public class UserServiceTest {
                 .name("테스트 수정")
                 .phone("01098765432")
                 .address("수정된 주소")
-                .auth(User.Auth.BUYER)
+                .auth(Auth.BUYER)
                 .password("123456")
                 .build();
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(savedUser));
@@ -280,7 +280,7 @@ public class UserServiceTest {
                 .name("테스트")
                 .phone("01012345678")
                 .address("테스트 주소")
-                .auth(User.Auth.BUYER)
+                .auth(Auth.BUYER)
                 .password(password + "1")
                 .build();
 

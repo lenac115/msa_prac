@@ -1,10 +1,10 @@
 package com.example.product.service;
 
+import com.example.commonevents.order.OrderCreatedEvent;
+import com.example.commonevents.order.OrderFailedEvent;
+import com.example.commonevents.payment.PaymentCreatedEvent;
+import com.example.commonevents.product.ProductDto;
 import com.example.product.domain.Product;
-import com.example.product.dto.OrderCreatedEvent;
-import com.example.product.dto.OrderFailedEvent;
-import com.example.product.dto.PaymentCreatedEvent;
-import com.example.product.dto.ProductDto;
 import com.example.product.kafka.ProductProducer;
 import com.example.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +26,8 @@ public class ProductService {
 
     public ProductDto create(ProductDto productDto) {
 
-        Product newProduct = convertToProduct(productDto);
+        Product newProduct = productRepository.save(convertToProduct(productDto));
+        System.out.println("new :" + newProduct.getId());
         return convertToProductDto(productRepository.save(newProduct));
     }
 
@@ -39,7 +40,8 @@ public class ProductService {
     public void checkStock(OrderCreatedEvent event) {
 
         event.getOrderedProducts().forEach(product -> {
-            Product findProduct = productRepository.findById(product.getId()).orElseThrow(() -> new RuntimeException("Product not found"));
+            System.out.println("ordered :" + product.getProductId());
+            Product findProduct = productRepository.findById(product.getProductId()).orElseThrow(() -> new RuntimeException("Product not found"));
             if (!findProduct.checkStock(product.getQuantity())) {
                 productProducer.sendOrderFailedEvent(OrderFailedEvent.builder()
                         .eventId(UUID.randomUUID().toString())
@@ -56,20 +58,9 @@ public class ProductService {
     public void reduceStock(OrderCreatedEvent event) {
 
         event.getOrderedProducts().forEach(product -> {
-            Product findProduct = productRepository.findById(product.getId()).orElseThrow(() -> new RuntimeException("Product not found"));
+            Product findProduct = productRepository.findById(product.getProductId()).orElseThrow(() -> new RuntimeException("Product not found"));
             findProduct.buy(product.getQuantity());
         });
-
-
-        productProducer.sendPaymentCreated(PaymentCreatedEvent.builder()
-                .orderId(event.getOrderId())
-                .timestamp(Instant.now())
-                .eventId(UUID.randomUUID().toString())
-                .eventType("PAYMENT_CREATED")
-                .buyerId(event.getBuyerId())
-                .amount(event.getOrderedProducts().stream().mapToInt(product ->
-                        product.getPrice() * product.getQuantity()).sum())
-                .build());
     }
 
 

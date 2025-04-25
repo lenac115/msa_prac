@@ -1,0 +1,9 @@
+
+rootProject.name = 'msa-project'
+
+include ':common-events'
+include ':order'
+include ':product'
+include ':auth'
+include ':payment'
+include ':api-gateway'

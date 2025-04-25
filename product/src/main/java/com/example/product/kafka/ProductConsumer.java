@@ -1,6 +1,6 @@
 package com.example.product.kafka;
 
-import com.example.product.dto.OrderCreatedEvent;
+import com.example.commonevents.order.OrderCreatedEvent;
 import com.example.product.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,5 +1,6 @@
 package com.example.payment.repository;
 
+import com.example.commonevents.payment.Status;
 import com.example.payment.domain.Payment;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -11,5 +12,5 @@ import java.util.Optional;
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     @Query("select p from Payment p where p.orderId = :orderId and p.status = :status")
-    Optional<Payment> findByOrderId(Long orderId, Payment.Status status);
+    Optional<Payment> findByOrderId(Long orderId, Status status);
 }

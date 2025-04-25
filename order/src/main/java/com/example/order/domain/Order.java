@@ -1,5 +1,6 @@
 package com.example.order.domain;
 
+import com.example.commonevents.order.Status;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -35,12 +36,5 @@ public class Order {
 
     public void updateStatus(Status status) {
         this.status = status;
-    }
-
-    public enum Status {
-        PENDING,
-        PAID,
-        FAILED,
-        CANCELED
     }
 }

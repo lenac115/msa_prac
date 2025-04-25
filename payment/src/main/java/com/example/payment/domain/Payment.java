@@ -1,5 +1,6 @@
 package com.example.payment.domain;
 
+import com.example.commonevents.payment.Status;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -27,23 +28,16 @@ public class Payment {
 
 
     @Enumerated(EnumType.STRING)
-    private Payment.Status status;
+    private Status status;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
 
-    public enum Status {
-        PENDING,
-        PAID,
-        FAILED,
-        CANCELED
-    }
-
     public void cancel() {
-        this.status = Payment.Status.CANCELED;
+        this.status = Status.CANCELED;
     }
 
-    public void updateStatus(Payment.Status status) {
+    public void updateStatus(Status status) {
         this.status = status;
     }
 }
