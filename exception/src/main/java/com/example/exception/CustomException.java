@@ -1,4 +1,4 @@
-package com.example.auth.exception;
+package com.example.exception;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

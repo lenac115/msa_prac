@@ -8,7 +8,6 @@ import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
-import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
@@ -41,6 +40,11 @@ public class JwtFilter implements GatewayFilter {
                 return handleError(exchange, HttpStatus.FORBIDDEN);
             }
             return chain.filter(exchange); // 인증 없이 허용
+        }
+
+        // Device Id 헤더 확인
+        if (request.getHeaders().get("X-Device-Id") == null) {
+            return handleError(exchange, HttpStatus.BAD_REQUEST);
         }
 
         String token = authHeader.substring(7);

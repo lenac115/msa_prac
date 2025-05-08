@@ -12,7 +12,7 @@ public class EmailService {
     private final JavaMailSender javaMailSender;
 
     public void sendResetPasswordEmail(String email, String token) {
-        String resetLink = "https://localhost:8080/user/reset-password-page?token=" + token;
+        String resetLink = "https://localhost:3000/user/reset-password-page?token=" + token;
 
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(email);

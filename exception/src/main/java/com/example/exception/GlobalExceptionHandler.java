@@ -1,6 +1,6 @@
-package com.example.auth.exception;
+package com.example.exception;
 
-import com.example.auth.exception.errorcode.CommonErrorCode;
+import com.example.exception.errorcode.CommonErrorCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;

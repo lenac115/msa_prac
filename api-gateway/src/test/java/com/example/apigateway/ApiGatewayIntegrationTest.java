@@ -2,21 +2,18 @@ package com.example.apigateway;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.reactive.server.WebTestClient;
-import org.testcontainers.shaded.org.awaitility.Awaitility;
 
 import java.io.IOException;
-import java.time.Duration;
-import java.util.concurrent.atomic.AtomicReference;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
@@ -27,6 +24,9 @@ class ApiGatewayIntegrationTest {
     private WebTestClient webTestClient;
 
     private ObjectMapper objectMapper = new ObjectMapper();
+
+    @Value("${toss.payments.secret-key}")
+    private String secretKey;
 
     static final String API_URL = "http://localhost:8080";
 
@@ -130,7 +130,9 @@ class ApiGatewayIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .exchange()
                 .expectStatus().isOk();
-
+        /* 구매자 테스트 플로우, 그러나 결제 생성의 주요 주체를 프론트로 옮겨서 백엔드에서 결제를 생성할 수는 있으나 생성한 결제는 토스에 먼저 결제를 생성하고
+            그 결제를 검증하기 위한 것이기 때문에 테스트 환경에서 테스트가 불가함. 테스트 메소드 연구 당시에는 주문 요청까지는 완전히 실행되었으나
+            결제 생성 파트에서 실제 결제를 생성하지 못함.
         // 1. 회원가입
         String registerBuyerPayload = """
                 {
@@ -193,60 +195,14 @@ class ApiGatewayIntegrationTest {
         JsonNode orderJson = objectMapper.readTree(orderResponseBody);
         Long orderId = orderJson.get("id").asLong();
 
-        // 4. 결제 생성
-        String newPaymentPayload = """
-                
-                    {
-                        "orderId": %d,
-                        "buyerId": 1,
-                        "amount": 20000,
-                        "paymentKey": "test-paymentKey"
-                    }
-                
-                """.formatted(orderId);
-
-        byte[] paymentResponseBody = webTestClient.post().uri(API_URL + "/payment/new")
-                .header("Authorization", "Bearer " + buyerAccessToken)
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(newPaymentPayload)
-                .exchange()
-                .expectStatus().isCreated()
-                .expectBody()
-                .returnResult()
-                .getResponseBodyContent();
-
-        JsonNode newPaymentJson = objectMapper.readTree(paymentResponseBody);
-        String paymentKey = newPaymentJson.get("id").asText();
-
-        // 5. 결제 확인
-        AtomicReference<String> paymentKeyRef = new AtomicReference<>();
-
-        Awaitility.await()
-                .atMost(Duration.ofSeconds(5))
-                .pollInterval(Duration.ofMillis(500))
-                .untilAsserted(() -> {
-                    byte[] body = webTestClient.get().uri(API_URL + "/payment/order/" + orderId)
-                            .header("Authorization", "Bearer " + buyerAccessToken)
-                            .exchange()
-                            .expectStatus().isOk()
-                            .expectBody()
-                            .jsonPath("$.paymentKey").value(Matchers.notNullValue())
-                            .returnResult()
-                            .getResponseBodyContent();
-
-                    // JSON 파싱해서 paymentKey 추출
-                    JsonNode root = objectMapper.readTree(body);
-                    String findPaymentKey = root.get("paymentKey").asText();
-                    paymentKeyRef.set(findPaymentKey);
-                });
-
+        // 4. 결제 확인
         String paymentPayload = String.format("""
                 {
                     "orderId": %d,
                     "paymentKey": "%s",
-                    "amount": 1
+                    "amount": 20000
                 }
-                """.formatted(orderId, paymentKeyRef.get()));
+                """.formatted(orderId, "test-Key"));
 
 
         webTestClient.post().uri(API_URL + "/payment/confirm")
@@ -262,6 +218,6 @@ class ApiGatewayIntegrationTest {
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody()
-                .jsonPath("$.status").isEqualTo("PAID");
+                .jsonPath("$.status").isEqualTo("PAID");*/
     }
 }

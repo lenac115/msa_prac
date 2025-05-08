@@ -1,9 +1,9 @@
 package com.example.auth;
 
 import com.example.auth.domain.User;
-import com.example.auth.exception.CustomException;
-import com.example.auth.exception.errorcode.CommonErrorCode;
-import com.example.auth.exception.errorcode.UserErrorCode;
+import com.example.exception.CustomException;
+import com.example.exception.errorcode.CommonErrorCode;
+import com.example.exception.errorcode.UserErrorCode;
 import com.example.auth.jwt.JwtTokenProvider;
 import com.example.auth.jwt.TokenValidationResult;
 import com.example.auth.redis.RedisUtils;
@@ -22,7 +22,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -62,6 +64,9 @@ public class UserServiceTest {
 
     @Mock
     private EmailService emailService;
+
+    @Mock
+    private AuthenticationManager authenticationManager;
 
     @Mock
     private BasicUUIDGenerator uuidGenerator;
@@ -234,6 +239,7 @@ public class UserServiceTest {
         String email = "testUser@naver.com";
         String password = "123456";
         String encodedPassword = "encodedPassword";
+        String deviceId = "test-device";
         User mockUser = User.builder()
                 .email(email)
                 .password(encodedPassword)
@@ -243,17 +249,18 @@ public class UserServiceTest {
 
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(mockUser));
         when(tokenProvider.generateToken(any(Authentication.class))).thenReturn(mockTokenResponse);
+        when(authenticationManager.authenticate(any(Authentication.class))).thenReturn(new UsernamePasswordAuthenticationToken(email, password));
         when(passwordEncoder.matches(password, mockUser.getPassword())).thenReturn(true);
 
         // when
-        TokenResponse tokenResponse = userService.login(email, password);
+        TokenResponse tokenResponse = userService.login(email, password, deviceId);
 
         // then
         assertNotNull(tokenResponse);
         assertEquals("mockAccessToken", tokenResponse.getAccessToken());
         assertEquals("mockRefreshToken", tokenResponse.getRefreshToken());
 
-        verify(redisUtils, times(1)).set("RT:" + email, "mockRefreshToken", 1440);
+        verify(redisUtils, times(1)).set("RT:" + email + ":" + deviceId, "mockRefreshToken", 1440);
     }
 
     @Test
@@ -261,12 +268,13 @@ public class UserServiceTest {
         // given
         String email = "testUser@naver.com";
         String password = "123456";
+        String deviceId = "test-device";
 
         when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
 
         // when & then
         CustomException exception =
-                assertThrows(CustomException.class, () -> userService.login(email, password));
+                assertThrows(CustomException.class, () -> userService.login(email, password, deviceId));
         assertEquals(UserErrorCode.NOT_EXIST_EMAIL, exception.getErrorCode());
     }
 
@@ -275,6 +283,7 @@ public class UserServiceTest {
         // given
         String email = "testUser@naver.com";
         String password = "123456";
+        String deviceId = "test-device";
         User savedUser = User.builder()
                 .email(email)
                 .name("테스트")
@@ -288,7 +297,7 @@ public class UserServiceTest {
 
         // when & then
         CustomException exception =
-                assertThrows(CustomException.class, () -> userService.login(email, password));
+                assertThrows(CustomException.class, () -> userService.login(email, password, deviceId));
         assertEquals(UserErrorCode.NOT_EQUAL_PASSWORD, exception.getErrorCode());
     }
 
@@ -297,12 +306,13 @@ public class UserServiceTest {
         // given
         String accessToken = "validAccessToken";
         String email = "testUser@naver.com";
+        String deviceId = "test-deviceId";
 
         when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
 
         // when & then
         CustomException exception =
-                assertThrows(CustomException.class, () -> userService.logout(accessToken, email));
+                assertThrows(CustomException.class, () -> userService.logout(accessToken, email, deviceId));
         assertEquals(UserErrorCode.NOT_EXIST_EMAIL, exception.getErrorCode());
     }
 
@@ -311,6 +321,7 @@ public class UserServiceTest {
         // given
         String accessToken = "invalidAccessToken";
         String email = "testUser@naver.com";
+        String deviceId = "test-deviceId";
         User user = User.builder()
                 .email(email)
                 .password("password")
@@ -324,7 +335,7 @@ public class UserServiceTest {
 
         // when & then
         CustomException exception =
-                assertThrows(CustomException.class, () -> userService.logout(accessToken, email));
+                assertThrows(CustomException.class, () -> userService.logout(accessToken, email, deviceId));
         assertEquals(UserErrorCode.INVALID_USER_TOKEN, exception.getErrorCode());
     }
 
@@ -333,6 +344,7 @@ public class UserServiceTest {
         // given
         String accessToken = "validAccessToken";
         String email = "testUser@naver.com";
+        String deviceId = "test-deviceId";
         User user = User.builder()
                 .email(email)
                 .password("password")
@@ -349,7 +361,7 @@ public class UserServiceTest {
 
         // when & then
         CustomException exception
-                = assertThrows(CustomException.class, () -> userService.logout(accessToken, email));
+                = assertThrows(CustomException.class, () -> userService.logout(accessToken, email, deviceId));
         assertEquals(UserErrorCode.NOT_ACCOUNT_AUTH, exception.getErrorCode());
     }
 
@@ -358,6 +370,7 @@ public class UserServiceTest {
         // given
         String accessToken = "validAccessToken";
         String email = "testUser@naver.com";
+        String deviceId = "test-deviceId";
         User user = User.builder()
                 .email(email)
                 .password("password")
@@ -373,11 +386,11 @@ public class UserServiceTest {
         when(tokenProvider.getAuthentication(accessToken)).thenReturn(authentication);
 
         // when
-        userService.logout(accessToken, email);
+        userService.logout(accessToken, email, deviceId);
 
         // then
         verify(redisUtils, times(1)).setBlackList(accessToken, "accessToken", 1440);
-        verify(redisUtils, times(1)).delete("RT:" + email);
+        verify(redisUtils, times(1)).delete("RT:" + email + ":" + deviceId);
         assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
 
@@ -447,6 +460,7 @@ public class UserServiceTest {
         // given
         String accessToken = "validAccessToken";
         String email = "testUser@naver.com";
+        String deviceId = "test-deviceId";
         User user = User.builder()
                 .email(email)
                 .password("password")
@@ -466,7 +480,7 @@ public class UserServiceTest {
 
         // then
         verify(redisUtils, times(1)).setBlackList(accessToken, "accessToken", 1440);
-        verify(redisUtils, times(1)).delete("RT:" + email);
+        verify(redisUtils, times(1)).deleteAllRefreshTokens(email);
         assertNull(SecurityContextHolder.getContext().getAuthentication());
         verify(userRepository, times(1)).delete(user);
     }
@@ -748,6 +762,7 @@ public class UserServiceTest {
         // given
         String accessToken = "accessToken";
         String refreshToken = "RT:testUser@naver.com";
+        String deviceId = "test-deviceId";
 
         when(tokenProvider.validateToken(refreshToken)).thenReturn(TokenValidationResult.builder()
                 .valid(false)
@@ -756,7 +771,7 @@ public class UserServiceTest {
 
         // when & then
         CustomException exception =
-                assertThrows(CustomException.class, () -> userService.reissue(accessToken, refreshToken));
+                assertThrows(CustomException.class, () -> userService.reissue(accessToken, refreshToken, deviceId));
         assertEquals(UserErrorCode.INVALID_USER_TOKEN, exception.getErrorCode());
     }
 
@@ -767,6 +782,7 @@ public class UserServiceTest {
         String accessToken = "accessToken";
         String refreshToken = "RT:testUser@naver.com";
         String redisRefreshToken = "RT:testUser@naver.com";
+        String deviceId = "test-deviceId";
 
         Authentication authentication = new TestingAuthenticationToken("testUser@naver.com", "password");
 
@@ -779,7 +795,7 @@ public class UserServiceTest {
 
         // when & then
         CustomException exception =
-                assertThrows(CustomException.class, () -> userService.reissue(accessToken, refreshToken));
+                assertThrows(CustomException.class, () -> userService.reissue(accessToken, refreshToken, deviceId));
         assertEquals(UserErrorCode.REFRESH_TOKEN_NOT_FOUND_IN_REDIS, exception.getErrorCode());
     }
 
@@ -790,6 +806,7 @@ public class UserServiceTest {
         String accessToken = "accessToken";
         String refreshToken = "RT:testUser@naver.com";
         String redisRefreshToken = "RT:testUser@naver.com";
+        String deviceId = "test-deviceId";
 
         Authentication authentication = new TestingAuthenticationToken("testUser@naver.com", "password");
 
@@ -803,11 +820,11 @@ public class UserServiceTest {
                         .tokenErrorReason(TokenValidationResult.TokenErrorReason.INVALID)
                         .build());
         when(tokenProvider.getAuthentication(accessToken)).thenReturn(authentication);
-        when(redisUtils.get(refreshToken)).thenReturn(redisRefreshToken);
+        when(redisUtils.get(refreshToken + ":" + deviceId)).thenReturn(redisRefreshToken);
 
         // when & then
         CustomException exception =
-                assertThrows(CustomException.class, () -> userService.reissue(accessToken, refreshToken));
+                assertThrows(CustomException.class, () -> userService.reissue(accessToken, refreshToken, deviceId));
         assertEquals(UserErrorCode.REFRESH_TOKEN_EXPIRED, exception.getErrorCode());
     }
 
@@ -818,6 +835,7 @@ public class UserServiceTest {
         String accessToken = "accessToken";
         String refreshToken = "RT:testUser@naver.com";
         String redisRefreshToken = "RT:testUser1@naver.com";
+        String deviceId = "test-deviceId";
 
         Authentication authentication = new TestingAuthenticationToken("testUser@naver.com", "password");
 
@@ -830,11 +848,11 @@ public class UserServiceTest {
                 .tokenErrorReason(TokenValidationResult.TokenErrorReason.VALID)
                 .build());
         when(tokenProvider.getAuthentication(accessToken)).thenReturn(authentication);
-        when(redisUtils.get(refreshToken)).thenReturn(redisRefreshToken);
+        when(redisUtils.get(refreshToken + ":" + deviceId)).thenReturn(redisRefreshToken);
 
         // when & then
         CustomException exception =
-                assertThrows(CustomException.class, () -> userService.reissue(accessToken, refreshToken));
+                assertThrows(CustomException.class, () -> userService.reissue(accessToken, refreshToken, deviceId));
         assertEquals(UserErrorCode.TOKEN_MISMATCH_BETWEEN_CLIENT_AND_SERVER, exception.getErrorCode());
     }
 
@@ -845,6 +863,7 @@ public class UserServiceTest {
         String accessToken = "accessToken";
         String refreshToken = "testUser@naver.com";
         String redisRefreshToken = "testUser@naver.com";
+        String deviceId = "test-deviceId";
 
         Authentication authentication = new TestingAuthenticationToken("testUser@naver.com", "password");
         TokenResponse mockTokenResponse = new TokenResponse(accessToken, "Bearer", refreshToken);
@@ -858,17 +877,17 @@ public class UserServiceTest {
                 .tokenErrorReason(TokenValidationResult.TokenErrorReason.VALID)
                 .build());
         when(tokenProvider.getAuthentication(accessToken)).thenReturn(authentication);
-        when(redisUtils.get("RT:" + refreshToken)).thenReturn(redisRefreshToken);
+        when(redisUtils.get("RT:" + refreshToken + ":" + deviceId)).thenReturn(redisRefreshToken);
         when(tokenProvider.generateToken(any(Authentication.class))).thenReturn(mockTokenResponse);
 
         // when
-        TokenResponse tokenResponse = userService.reissue(accessToken, refreshToken);
+        TokenResponse tokenResponse = userService.reissue(accessToken, refreshToken, deviceId);
 
         // then
         assertNotNull(tokenResponse);
         assertEquals(accessToken, tokenResponse.getAccessToken());
         assertEquals(refreshToken, tokenResponse.getRefreshToken());
         verify(redisUtils, times(1)).delete(tokenResponse.getRefreshToken());
-        verify(redisUtils, times(1)).set("RT:" + authentication.getName(), refreshToken, 1440);
+        verify(redisUtils, times(1)).set("RT:" + authentication.getName() + ":" + deviceId, refreshToken, 1440);
     }
 }

@@ -54,6 +54,7 @@ public class AuthIntegrationTest {
 
         // when: 로그인 요청
         MvcResult loginResult = mockMvc.perform(post("/auth/public/login")
+                        .header("X-device-Id", "test-deviceId")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -69,7 +70,7 @@ public class AuthIntegrationTest {
         );
 
         // then: 발급된 RefreshToken이 Redis에 저장되었는지 확인
-        String redisKey = "RT:test@naver.com";
+        String redisKey = "RT:test@naver.com:test-deviceId";
         String savedRefreshToken = (String) redisUtils.get(redisKey);
         assertEquals(savedRefreshToken, tokenResponse.getRefreshToken());
 
@@ -90,8 +91,9 @@ public class AuthIntegrationTest {
 
         String json = objectMapper.writeValueAsString(reissueRequest);
         // when: 재발급 요청
-        MvcResult reissueResult = mockMvc.perform(post("/auth/common/reissue")
+        MvcResult reissueResult = mockMvc.perform(post("/auth/public/reissue")
                         .header("Authorization", "Bearer " + expiredAccessToken)
+                        .header("X-device-Id", "test-deviceId")
                         .contentType(MediaType.APPLICATION_JSON)
                         .with(csrf())
                         .content(json))

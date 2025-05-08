@@ -1,6 +1,6 @@
-package com.example.auth.exception.errorcode;
+package com.example.exception.errorcode;
 
-import com.example.auth.exception.ErrorCode;
+import com.example.exception.ErrorCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

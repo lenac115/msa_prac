@@ -27,12 +27,15 @@ public class JwtFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
 
-        String token = resolveToken(request); // Authorization 헤더에서 Bearer 토큰 추출
+        String requestURI = request.getRequestURI();
 
-        if(request.getRequestURI().startsWith("/auth/public")) {
+        // Public or reissue URI는 바로 통과
+        if (requestURI.contains("/auth/public") || requestURI.contains("/auth/common/reissue")) {
             chain.doFilter(request, response);
             return;
         }
+
+        String token = resolveToken(request); // Authorization 헤더에서 Bearer 토큰 추출
 
         if (token != null && tokenProvider.validateToken(token).getValid()) {
             Authentication authentication = tokenProvider.getAuthentication(token);

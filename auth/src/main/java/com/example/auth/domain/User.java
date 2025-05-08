@@ -5,6 +5,8 @@ import com.example.commonevents.auth.UserDto;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
+
 @Entity
 @Getter
 @AllArgsConstructor
@@ -26,6 +28,8 @@ public class User {
     private String address;
 
     private String phone;
+
+    private LocalDate birthday;
 
     @Enumerated(EnumType.STRING)
     private Auth auth;

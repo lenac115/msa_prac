@@ -18,13 +18,12 @@ import java.time.LocalDateTime;
 public class Payment {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
     private Long orderId;
-    private Long buyerId;
     private Integer amount;
     private String paymentKey;
+    private LocalDateTime approvedAt;
 
 
     @Enumerated(EnumType.STRING)
@@ -37,7 +36,8 @@ public class Payment {
         this.status = Status.CANCELED;
     }
 
-    public void updateStatus(Status status) {
+    public void updateStatus(Status status, String payToken) {
         this.status = status;
+        this.paymentKey = payToken;
     }
 }

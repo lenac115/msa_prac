@@ -2,8 +2,10 @@ package com.example.product.service;
 
 import com.example.commonevents.order.OrderCreatedEvent;
 import com.example.commonevents.order.OrderFailedEvent;
-import com.example.commonevents.payment.PaymentCreatedEvent;
+import com.example.commonevents.order.OrderedProductDto;
 import com.example.commonevents.product.ProductDto;
+import com.example.exception.CustomException;
+import com.example.exception.errorcode.ProductErrorCode;
 import com.example.product.domain.Product;
 import com.example.product.kafka.ProductProducer;
 import com.example.product.repository.ProductRepository;
@@ -33,7 +35,8 @@ public class ProductService {
 
     public ProductDto updateProduct(ProductDto productDto) {
 
-        Product updatedProduct = productRepository.findById(productDto.getId()).orElseThrow(() -> new RuntimeException("Product not found"));
+        Product updatedProduct = productRepository.findById(productDto.getId())
+                .orElseThrow(() -> new CustomException(ProductErrorCode.NOT_EXIST_PRODUCT));
         return convertToProductDto(updatedProduct.update(productDto));
     }
 
@@ -41,7 +44,8 @@ public class ProductService {
 
         event.getOrderedProducts().forEach(product -> {
             System.out.println("ordered :" + product.getProductId());
-            Product findProduct = productRepository.findById(product.getProductId()).orElseThrow(() -> new RuntimeException("Product not found"));
+            Product findProduct = productRepository.findById(product.getProductId())
+                    .orElseThrow(() -> new CustomException(ProductErrorCode.NOT_EXIST_PRODUCT));
             if (!findProduct.checkStock(product.getQuantity())) {
                 productProducer.sendOrderFailedEvent(OrderFailedEvent.builder()
                         .eventId(UUID.randomUUID().toString())
@@ -58,9 +62,17 @@ public class ProductService {
     public void reduceStock(OrderCreatedEvent event) {
 
         event.getOrderedProducts().forEach(product -> {
-            Product findProduct = productRepository.findById(product.getProductId()).orElseThrow(() -> new RuntimeException("Product not found"));
+            Product findProduct = productRepository.findById(product.getProductId())
+                    .orElseThrow(() -> new CustomException(ProductErrorCode.NOT_EXIST_PRODUCT));
             findProduct.buy(product.getQuantity());
         });
+    }
+
+    public void restoreStock(OrderedProductDto productDto) {
+
+        Product product = productRepository.findById(productDto.getProductId())
+                .orElseThrow(() -> new CustomException(ProductErrorCode.NOT_EXIST_PRODUCT));
+        product.restore(productDto.getQuantity());
     }
 
 

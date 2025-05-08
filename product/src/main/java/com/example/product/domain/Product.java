@@ -43,6 +43,10 @@ public class Product {
         }
     }
 
+    public void restore(Integer quantity) {
+        this.stock += quantity;
+    }
+
     public boolean checkStock(Integer quantity) {
         return quantity <= this.stock;
     }

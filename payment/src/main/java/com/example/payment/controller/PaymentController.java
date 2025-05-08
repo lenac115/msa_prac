@@ -1,8 +1,8 @@
 package com.example.payment.controller;
 
 import com.example.commonevents.payment.PaymentConfirmRequest;
-import com.example.commonevents.payment.PaymentCreatedEvent;
 import com.example.commonevents.payment.PaymentDto;
+import com.example.commonevents.payment.PaymentReadyRequest;
 import com.example.payment.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -41,16 +41,14 @@ public class PaymentController {
                 .body("취소 완료");
     }
 
-    @PostMapping("/new")
-    public ResponseEntity<Object> newPayment(@RequestBody PaymentCreatedEvent event) {
-
-        PaymentDto paymentDto = paymentService.createPayment(event);
-        return ResponseEntity.status(HttpStatus.CREATED).body(paymentDto);
-    }
-
     @PostMapping("/confirm")
     public ResponseEntity<?> confirmPayment(@RequestBody PaymentConfirmRequest request) throws IOException {
         paymentService.processPaymentRequest(request);
         return ResponseEntity.ok().body("Payment Successful");
+    }
+
+    @PostMapping("/ready")
+    public ResponseEntity<?> readyPayment(@RequestBody PaymentReadyRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(paymentService.createPayment(request));
     }
 }

@@ -1,9 +1,11 @@
 package com.example.auth.service;
 
 import com.example.auth.domain.User;
-import com.example.auth.exception.CustomException;
-import com.example.auth.exception.errorcode.CommonErrorCode;
-import com.example.auth.exception.errorcode.UserErrorCode;
+import com.example.auth.kafka.UserEventProducer;
+import com.example.commonevents.auth.SendMailEvent;
+import com.example.exception.CustomException;
+import com.example.exception.errorcode.CommonErrorCode;
+import com.example.exception.errorcode.UserErrorCode;
 import com.example.auth.jwt.JwtTokenProvider;
 import com.example.auth.redis.RedisUtils;
 import com.example.auth.repository.UserRepository;
@@ -39,39 +41,40 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final BasicUUIDGenerator uuidGenerator;
     private final AuthenticationManager authenticationManager;
+    private final UserEventProducer userEventProducer;
 
     @Transactional
-    public TokenResponse reissue(String requestAccessToken, String requestRefreshToken) {
+    public TokenResponse reissue(String requestAccessToken, String requestRefreshToken, String deviceId) {
         if (!tokenProvider.validateToken(requestRefreshToken).getValid()) {
             throw new CustomException(UserErrorCode.INVALID_USER_TOKEN);
         }
 
-        Authentication authentication = tokenProvider.getAuthentication(requestAccessToken);
+        Authentication authentication = tokenProvider.getAuthEvenIfExpired(requestAccessToken);
 
-        String reidsRefreshToken = Optional.ofNullable(redisUtils.get("RT:" + authentication.getName()))
+        String redisRefreshToken = Optional.ofNullable(redisUtils.get("RT:" + authentication.getName() + ":" + deviceId))
                 .filter(value -> value instanceof String)
                 .map(value -> (String) value)
                 .orElseThrow(() -> new CustomException(UserErrorCode.REFRESH_TOKEN_NOT_FOUND_IN_REDIS));
 
 
-        if (!tokenProvider.validateToken(reidsRefreshToken).getValid()) {
-            redisUtils.delete("RT:" + authentication.getName());
+        if (!tokenProvider.validateToken(redisRefreshToken).getValid()) {
+            redisUtils.delete("RT:" + authentication.getName() + ":" + deviceId);
             throw new CustomException(UserErrorCode.REFRESH_TOKEN_EXPIRED);
         }
 
-        if (!requestRefreshToken.equals(reidsRefreshToken)) {
+        if (!requestRefreshToken.equals(redisRefreshToken)) {
             throw new CustomException(UserErrorCode.TOKEN_MISMATCH_BETWEEN_CLIENT_AND_SERVER);
         }
 
         TokenResponse tokenResponse = tokenProvider.generateToken(authentication);
-        redisUtils.delete(tokenResponse.getRefreshToken());
-        redisUtils.set("RT:" + authentication.getName(), tokenResponse.getRefreshToken(), 1440);
+        redisUtils.delete("RT:" + authentication.getName() + ":" + deviceId);
+        redisUtils.set("RT:" + authentication.getName() + ":" + deviceId, tokenResponse.getRefreshToken(), 1440);
 
         return tokenResponse;
     }
 
     @Transactional
-    public TokenResponse login(String email, String password) {
+    public TokenResponse login(String email, String password, String deviceId) {
 
         User findUser = userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(UserErrorCode.NOT_EXIST_EMAIL));
@@ -86,13 +89,13 @@ public class UserService {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         TokenResponse tokenResponse = tokenProvider.generateToken(authentication);
-        redisUtils.set("RT:" + email, tokenResponse.getRefreshToken(), 1440);
+        redisUtils.set("RT:" + email + ":" + deviceId, tokenResponse.getRefreshToken(), 1440);
 
         return tokenResponse;
     }
 
     @Transactional
-    public void logout(String accessToken, String email) {
+    public void logout(String accessToken, String email, String deviceId) {
 
         User findUser = userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(UserErrorCode.NOT_EXIST_EMAIL));
@@ -108,7 +111,7 @@ public class UserService {
 
         SecurityContextHolder.getContext().setAuthentication(null);
         redisUtils.setBlackList(accessToken, "accessToken", 1440);
-        redisUtils.delete("RT:" + email);
+        redisUtils.delete("RT:" + email + ":" + deviceId);
     }
 
     public UserDto getUser(String username) {
@@ -152,7 +155,7 @@ public class UserService {
         }
 
         redisUtils.setBlackList(accessToken, "accessToken", 1440);
-        redisUtils.delete("RT:" + username);
+        redisUtils.deleteAllRefreshTokens(username);
         SecurityContextHolder.getContext().setAuthentication(null);
         userRepository.delete(findUser);
     }
@@ -213,6 +216,10 @@ public class UserService {
         redisUtils.set(token, user.getEmail(), 10);
 
         // 이메일로 비밀번호 재설정 링크 전송
+        userEventProducer.sendResetMail(SendMailEvent.builder()
+                        .email(user.getEmail())
+                        .token(token)
+                .build());
         emailService.sendResetPasswordEmail(user.getEmail(), token);
     }
 
@@ -249,6 +256,7 @@ public class UserService {
                 .id(userDto.getId())
                 .auth(userDto.getAuth())
                 .address(userDto.getAddress())
+                .birthday(userDto.getBirthDay())
                 .build();
     }
 
@@ -260,6 +268,7 @@ public class UserService {
                 .name(user.getName())
                 .auth(user.getAuth())
                 .address(user.getAddress())
+                .birthDay(user.getBirthday())
                 .build();
     }
 }

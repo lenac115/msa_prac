@@ -16,6 +16,6 @@ public class PaymentCompletedEvent {
     private String eventId;
     private String eventType;
     private Long orderId;
-    private Long paymentId;
+    private String paymentId;
     private Instant timestamp;
 }

@@ -1,4 +1,4 @@
-package com.example.auth.exception;
+package com.example.exception;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;

@@ -2,6 +2,7 @@ package com.example.order.kafka;
 
 import com.example.commonevents.order.OrderFailedEvent;
 import com.example.commonevents.payment.PaymentCompletedEvent;
+import com.example.commonevents.payment.StockRestoreEvent;
 import com.example.order.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,5 +32,11 @@ public class OrderConsumer {
     public void handleOrderFailed(OrderFailedEvent event) {
         log.info("Received Kafka message: {}", event);
         orderService.processOrderFailure(event);
+    }
+
+    @KafkaListener(topics = "stock-restore-topic", groupId = "stock-restore-group")
+    public void handleStockRestore(StockRestoreEvent event) {
+        log.info("Received Kafka message: {}", event);
+        orderService.productStockRestore(event);
     }
 }

@@ -49,22 +49,32 @@ project(":common-events") {
     jar { enabled = true }
 
     dependencies {
-        // 공통 모듈에 필요한 추가 의존성
         implementation 'org.springframework.boot:spring-boot-starter-web'
-        implementation 'org.springframework.kafka:spring-kafka'  // 이벤트 처리용 (필요시)
+        implementation 'org.projectlombok:lombok'
+        annotationProcessor 'org.projectlombok:lombok'
+    }
+}
+
+project(":exception") {
+    bootJar { enabled = false }
+    jar { enabled = true }
+
+    dependencies {
+        implementation 'org.springframework.boot:spring-boot-starter-web'
         implementation 'org.projectlombok:lombok'
         annotationProcessor 'org.projectlombok:lombok'
     }
 }
 
 // 각 마이크로서비스 모듈 설정
-["auth", "payment", "order", "product", "api-gateway"].each { module ->
+["auth", "payment", "order", "product", "api-gateway", "notification"].each { module ->
     project(":${module}") {
         bootJar { enabled = true }
         jar { enabled = true }
 
         dependencies {
             implementation project(":common-events")
+            implementation project(":exception")
             implementation 'org.springframework.boot:spring-boot-starter-web'
         }
     }

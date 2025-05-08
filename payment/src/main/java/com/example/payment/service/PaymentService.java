@@ -1,6 +1,8 @@
 package com.example.payment.service;
 
 import com.example.commonevents.payment.*;
+import com.example.exception.CustomException;
+import com.example.exception.errorcode.PaymentErrorCode;
 import com.example.payment.domain.Payment;
 import com.example.payment.kafka.PaymentProducer;
 import com.example.payment.repository.PaymentRepository;
@@ -15,7 +17,6 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.UUID;
 
@@ -27,6 +28,7 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final PaymentProducer paymentProducer;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Value("${toss.payments.secret-key}")
     private String secretKey;
@@ -38,24 +40,9 @@ public class PaymentService {
     }
 
     public PaymentDto getPaymentByOrderId(Long orderId) {
-        System.out.println("orderId : " +orderId);
         Payment payment = paymentRepository.findByOrderId(orderId, Status.PENDING)
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 결제입니다."));
+                .orElseThrow(() -> new CustomException(PaymentErrorCode.NOT_EXIST_PAYMENT));
         return convertPaymentDto(payment);
-    }
-
-    @Transactional
-    public PaymentDto createPayment(PaymentCreatedEvent event) {
-
-        Payment payment = Payment.builder()
-                .amount(event.getAmount())
-                .orderId(event.getOrderId())
-                .createdAt(LocalDateTime.now())
-                .buyerId(event.getBuyerId())
-                .paymentKey(event.getPaymentKey())
-                .status(Status.PENDING)
-                .build();
-        return convertPaymentDto(paymentRepository.save(payment));
     }
 
     @Transactional
@@ -73,40 +60,50 @@ public class PaymentService {
 
     private Payment sendToTossPayments(PaymentConfirmRequest request) throws IOException {
 
-        String encodedAuth = Base64.getEncoder().encodeToString((secretKey + ":").getBytes(StandardCharsets.UTF_8));
+        String encodedAuth = Base64.getEncoder()
+                .encodeToString((secretKey + ":").getBytes(StandardCharsets.UTF_8));
         String authorizationHeader = "Basic " + encodedAuth;
 
-        URL url = new URL("https://api.tosspayments.com/v1/payments/confirm");
+        URL url = new URL("https://api.tosspayments.com/v2/payments/execute");
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestProperty("Authorization", authorizationHeader);
         connection.setRequestProperty("Content-Type", "application/json");
         connection.setRequestMethod("POST");
         connection.setDoOutput(true);
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        String requestBody = objectMapper.writeValueAsString(request);
+        // 요청 바디 JSON 작성
+        String requestBody = objectMapper.writeValueAsString(request.getPayToken());
+
         try (OutputStream outputStream = connection.getOutputStream()) {
             outputStream.write(requestBody.getBytes(StandardCharsets.UTF_8));
         }
 
         int responseCode = connection.getResponseCode();
+        Payment payment = paymentRepository.findByOrderId(request.getOrderId(), Status.PENDING)
+                .orElseThrow(() -> new CustomException(PaymentErrorCode.NOT_EXIST_PAYMENT));
+
         try (InputStream responseStream = (responseCode >= 200 && responseCode < 300)
                 ? connection.getInputStream()
                 : connection.getErrorStream();
              Reader reader = new InputStreamReader(responseStream, StandardCharsets.UTF_8)) {
 
             if (responseCode >= 200 && responseCode < 300) {
-                return objectMapper.readValue(reader, Payment.class);
+
+                payment.updateStatus(Status.PAID, request.getPayToken());
+
+                return payment;
             } else {
+                payment.updateStatus(Status.FAILED, request.getPayToken());
                 ErrorResponse errorResponse = objectMapper.readValue(reader, ErrorResponse.class);
-                throw new IOException("결제 승인 실패: " + errorResponse.getMessage());
+                log.error("결제 검증 실패: {}", errorResponse.getMessage());
             }
         }
+
+        return payment;
     }
 
     @Transactional
     public void processPaymentSuccess(Payment payment) {
-        payment.updateStatus(Status.PAID);
 
         paymentProducer.sendPaymentSuccess(convertPaymentDto(payment));
 
@@ -116,11 +113,9 @@ public class PaymentService {
 
     @Transactional
     public void processPaymentFailure(Payment payment) {
-        payment.updateStatus(Status.FAILED);
-
         paymentProducer.sendPaymentFailure(convertPaymentDto(payment));
-
         log.info("결제 실패: 주문 ID={}", payment.getOrderId());
+        throw new CustomException(PaymentErrorCode.FAILED_VALIDATION);
     }
 
 
@@ -136,12 +131,24 @@ public class PaymentService {
                 .build());
     }
 
+    @Transactional
+    public PaymentDto createPayment(PaymentReadyRequest request) {
+
+        Payment payment = Payment.builder()
+                .orderId(request.getOrderId())
+                .amount(request.getAmount())
+                .status(Status.PENDING)
+                .build();
+
+        return convertPaymentDto(paymentRepository.save(payment));
+    }
+
     private Payment convertPayment(PaymentDto paymentDto) {
         return Payment.builder()
                 .amount(paymentDto.getAmount())
-                .buyerId(paymentDto.getBuyerId())
                 .createdAt(paymentDto.getCreatedAt())
                 .id(paymentDto.getId())
+                .approvedAt(paymentDto.getApprovedAt())
                 .orderId(paymentDto.getOrderId())
                 .status(paymentDto.getStatus())
                 .paymentKey(paymentDto.getPaymentKey())
@@ -151,8 +158,8 @@ public class PaymentService {
     private PaymentDto convertPaymentDto(Payment payment) {
         return PaymentDto.builder()
                 .amount(payment.getAmount())
-                .buyerId(payment.getBuyerId())
                 .createdAt(payment.getCreatedAt())
+                .approvedAt(payment.getApprovedAt())
                 .id(payment.getId())
                 .orderId(payment.getOrderId())
                 .status(payment.getStatus())

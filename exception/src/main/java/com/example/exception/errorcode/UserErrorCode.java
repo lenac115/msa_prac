@@ -1,6 +1,6 @@
-package com.example.auth.exception.errorcode;
+package com.example.exception.errorcode;
 
-import com.example.auth.exception.ErrorCode;
+import com.example.exception.ErrorCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -9,7 +9,7 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum UserErrorCode implements ErrorCode {
 
-    NOT_EXIST_EMAIL(HttpStatus.BAD_REQUEST, "Not Exist Email"),
+    NOT_EXIST_EMAIL(HttpStatus.NOT_FOUND, "Not Exist Email"),
     NOT_ACTIVATED_ACCOUNT(HttpStatus.FORBIDDEN, "Not Activated Account"),
     EXIST_BANNED_LIST(HttpStatus.FORBIDDEN,"Exist Banned List"),
     INVALID_USER_TOKEN(HttpStatus.UNAUTHORIZED, "Invalid User Token"),

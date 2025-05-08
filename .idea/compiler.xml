@@ -14,6 +14,15 @@
         <module name="msa-project.auth.main" />
         <module name="msa-project.product.main" />
       </profile>
+      <profile name="Gradle Imported" enabled="true">
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.projectlombok/lombok/1.18.36/5a30490a6e14977d97d9c73c924c1f1b5311ea95/lombok-1.18.36.jar" />
+          <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-configuration-processor/3.4.2/4f9e3e0c959aaf5fb24fd885f9ce201d8643f0dc/spring-boot-configuration-processor-3.4.2.jar" />
+        </processorPath>
+        <module name="msa-project.exception.main" />
+        <module name="msa-project.notification.main" />
+      </profile>
     </annotationProcessing>
     <bytecodeTargetLevel target="17" />
   </component>

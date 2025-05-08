@@ -2,10 +2,13 @@ package com.example.order.kafka;
 
 import com.example.commonevents.order.OrderCancelledEvent;
 import com.example.commonevents.order.OrderCreatedEvent;
+import com.example.commonevents.order.OrderedProductDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 
 @Service
@@ -21,5 +24,9 @@ public class OrderProducer {
 
     public void sendOrderCancelledEvent(OrderCancelledEvent event) {
         kafkaTemplate.send("order-cancelled-topic", event);
+    }
+
+    public void sendProductRestore(List<OrderedProductDto> event) {
+        kafkaTemplate.send("order-restore-topic", event);
     }
 }

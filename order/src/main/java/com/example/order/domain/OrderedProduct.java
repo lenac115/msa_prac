@@ -26,4 +26,8 @@ public class OrderedProduct {
     private Integer quantity;
 
     private Integer price;
+
+    public Integer total() {
+        return quantity * price;
+    }
 }

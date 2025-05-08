@@ -2,6 +2,9 @@ package com.example.order.service;
 
 import com.example.commonevents.order.*;
 import com.example.commonevents.payment.PaymentCompletedEvent;
+import com.example.commonevents.payment.StockRestoreEvent;
+import com.example.exception.CustomException;
+import com.example.exception.errorcode.OrderErrorCode;
 import com.example.order.client.AuthServiceClient;
 import com.example.order.domain.Order;
 import com.example.order.domain.OrderedProduct;
@@ -61,25 +64,25 @@ public class OrderService {
 
     public void processOrderFailure(PaymentCompletedEvent event) {
 
-        Order order = orderRepository.findById(event.getOrderId()).orElseThrow(() -> new RuntimeException("존재하지 않는 주문"));
+        Order order = orderRepository.findById(event.getOrderId()).orElseThrow(() -> new CustomException(OrderErrorCode.NOT_EXISTS_ORDER));
         order.updateStatus(Status.FAILED);
     }
 
     public void processOrderFailure(OrderFailedEvent event) {
 
-        Order order = orderRepository.findById(event.getOrderId()).orElseThrow(() -> new RuntimeException("존재하지 않는 주문"));
+        Order order = orderRepository.findById(event.getOrderId()).orElseThrow(() -> new CustomException(OrderErrorCode.NOT_EXISTS_ORDER));
         order.updateStatus(Status.FAILED);
     }
 
     public void processOrderSuccess(PaymentCompletedEvent event) {
 
-        Order order = orderRepository.findById(event.getOrderId()).orElseThrow(() -> new RuntimeException("존재하지 않는 주문"));
+        Order order = orderRepository.findById(event.getOrderId()).orElseThrow(() -> new CustomException(OrderErrorCode.NOT_EXISTS_ORDER));
         order.updateStatus(Status.PAID);
     }
 
     public void cancelOrder(Long orderId) {
 
-        Order order = orderRepository.findById(orderId).orElseThrow(() -> new RuntimeException("존재하지 않는 주문"));
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new CustomException(OrderErrorCode.NOT_EXISTS_ORDER));
         order.updateStatus(Status.CANCELED);
         orderProducer.sendOrderCancelledEvent(OrderCancelledEvent.builder()
                 .orderedProducts(order.getOrderedProductList().stream().map(this::convertToDto).collect(Collectors.toList()))
@@ -91,8 +94,14 @@ public class OrderService {
 
     @Transactional(readOnly = true)
     public OrderDto getOrder(Long orderId) {
-        Order order = orderRepository.findById(orderId).orElseThrow(() -> new RuntimeException("존재하지 않는 주문"));
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new CustomException(OrderErrorCode.NOT_EXISTS_ORDER));
         return convertToDto(order);
+    }
+
+    public void productStockRestore(StockRestoreEvent event) {
+
+        Order order = orderRepository.findById(event.getOrderId()).orElseThrow(() -> new CustomException(OrderErrorCode.NOT_EXISTS_ORDER));
+        orderProducer.sendProductRestore(order.getOrderedProductList().stream().map(this::convertToDto).collect(Collectors.toList()));
     }
 
     private OrderDto convertToDto(Order order) {

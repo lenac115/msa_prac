@@ -24,13 +24,14 @@ public class UserController {
     private final UserEventProducer userEventProducer;
 
     @PostMapping("/public/login")
-    public ResponseEntity<TokenResponse> login(@RequestBody UserDto userDto) {
-        return ResponseEntity.status(HttpStatus.OK).body(userService.login(userDto.getEmail(), userDto.getPassword()));
+    public ResponseEntity<TokenResponse> login(@RequestBody UserDto userDto, @RequestHeader("X-device-Id") String deviceId) {
+        return ResponseEntity.status(HttpStatus.OK).body(userService.login(userDto.getEmail(), userDto.getPassword(), deviceId));
     }
 
     @PostMapping("/common/logout")
-    public ResponseEntity<Object> logout(@RequestHeader("Authorization") String authorizationHeader, @AuthenticationPrincipal UserDetails userDetails) {
-        userService.logout(authorizationHeader, userDetails.getUsername());
+    public ResponseEntity<Object> logout(@RequestHeader("Authorization") String authorizationHeader, @AuthenticationPrincipal UserDetails userDetails,
+                                        @RequestHeader("X-device-Id") String deviceId) {
+        userService.logout(authorizationHeader, userDetails.getUsername(), deviceId);
         return ResponseEntity.status(HttpStatus.OK).body("User logged out");
     }
 
@@ -58,11 +59,11 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body("User updated");
     }
 
-    @PostMapping("/common/reissue")
-    public ResponseEntity<TokenResponse> reissue(@RequestBody TokenResponse tokenResponse) {
+    @PostMapping("/public/reissue")
+    public ResponseEntity<TokenResponse> reissue(@RequestBody TokenResponse tokenResponse, @RequestHeader("X-device-Id") String deviceId) {
 
         return ResponseEntity.status(HttpStatus.OK)
-                .body(userService.reissue(tokenResponse.getAccessToken(), tokenResponse.getRefreshToken()));
+                .body(userService.reissue(tokenResponse.getAccessToken(), tokenResponse.getRefreshToken(), deviceId));
     }
 
     @PostMapping("/common/change-password")

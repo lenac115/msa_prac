@@ -1,7 +1,6 @@
 package com.example.product.kafka;
 
 import com.example.commonevents.order.OrderFailedEvent;
-import com.example.commonevents.payment.PaymentCreatedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
