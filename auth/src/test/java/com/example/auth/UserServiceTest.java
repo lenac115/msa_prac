@@ -1,6 +1,7 @@
 package com.example.auth;
 
 import com.example.auth.domain.User;
+import com.example.auth.kafka.UserEventProducer;
 import com.example.exception.CustomException;
 import com.example.exception.errorcode.CommonErrorCode;
 import com.example.exception.errorcode.UserErrorCode;
@@ -64,6 +65,9 @@ public class UserServiceTest {
 
     @Mock
     private EmailService emailService;
+
+    @Mock
+    private UserEventProducer userEventProducer;
 
     @Mock
     private AuthenticationManager authenticationManager;
@@ -774,24 +778,28 @@ public class UserServiceTest {
                 assertThrows(CustomException.class, () -> userService.reissue(accessToken, refreshToken, deviceId));
         assertEquals(UserErrorCode.INVALID_USER_TOKEN, exception.getErrorCode());
     }
-
     @Test
-    @WithMockUser(value = "testUser@naver.com", roles = {"BUYER"})
+    @WithMockUser(value = "test@naver.com", roles = {"BUYER"})
     public void 토큰_재발급_Redis에서_토큰을_못찾는_경우_예외발생() {
         // given
         String accessToken = "accessToken";
-        String refreshToken = "RT:testUser@naver.com";
-        String redisRefreshToken = "RT:testUser@naver.com";
+        String refreshToken = "RT:test@naver.com:test-deviceId"; // 실제 키 형식과 일치하도록 수정
         String deviceId = "test-deviceId";
+        String expectedRedisKey = "RT:test@naver.com:test-deviceId";
 
-        Authentication authentication = new TestingAuthenticationToken("testUser@naver.com", "password");
+        Authentication authentication = new TestingAuthenticationToken("test@naver.com", "password");
 
+        // tokenProvider 모킹
         when(tokenProvider.validateToken(refreshToken)).thenReturn(TokenValidationResult.builder()
                 .valid(true)
                 .tokenErrorReason(TokenValidationResult.TokenErrorReason.VALID)
                 .build());
-        when(tokenProvider.getAuthentication(accessToken)).thenReturn(authentication);
-        when(redisUtils.get(refreshToken)).thenReturn(Optional.empty());
+
+        // getAuthEvenIfExpired 모킹 추가
+        when(tokenProvider.getAuthEvenIfExpired(accessToken)).thenReturn(authentication);
+
+        // redisUtils 모킹 - 실제 키 형식 사용
+        when(redisUtils.get(expectedRedisKey)).thenReturn(Optional.empty());
 
         // when & then
         CustomException exception =
@@ -800,15 +808,15 @@ public class UserServiceTest {
     }
 
     @Test
-    @WithMockUser(value = "testUser@naver.com", roles = {"BUYER"})
+    @WithMockUser(value = "test@naver.com", roles = {"BUYER"})
     public void 토큰_재발급_Redis에서_가져온_리프레시_토큰_검증_실패시_예외발생() {
         // given
         String accessToken = "accessToken";
-        String refreshToken = "RT:testUser@naver.com";
-        String redisRefreshToken = "RT:testUser@naver.com";
+        String refreshToken = "RT:test@naver.com:test-deviceId";
+        String redisRefreshToken = "RT:test@naver.com:test-deviceId";
         String deviceId = "test-deviceId";
 
-        Authentication authentication = new TestingAuthenticationToken("testUser@naver.com", "password");
+        Authentication authentication = new TestingAuthenticationToken("test@naver.com", "password");
 
         when(tokenProvider.validateToken(refreshToken))
                 .thenReturn(TokenValidationResult.builder()
@@ -819,8 +827,8 @@ public class UserServiceTest {
                         .valid(false)
                         .tokenErrorReason(TokenValidationResult.TokenErrorReason.INVALID)
                         .build());
-        when(tokenProvider.getAuthentication(accessToken)).thenReturn(authentication);
-        when(redisUtils.get(refreshToken + ":" + deviceId)).thenReturn(redisRefreshToken);
+        when(tokenProvider.getAuthEvenIfExpired(accessToken)).thenReturn(authentication);
+        when(redisUtils.get(refreshToken)).thenReturn(redisRefreshToken);
 
         // when & then
         CustomException exception =
@@ -829,15 +837,15 @@ public class UserServiceTest {
     }
 
     @Test
-    @WithMockUser(value = "testUser@naver.com", roles = {"BUYER"})
+    @WithMockUser(value = "test@naver.com", roles = {"BUYER"})
     public void 토큰_재발급_가져온_리프레시_토큰_불일치시_예외발생() {
         // given
         String accessToken = "accessToken";
-        String refreshToken = "RT:testUser@naver.com";
-        String redisRefreshToken = "RT:testUser1@naver.com";
+        String refreshToken = "RT:test@naver.com";
+        String redisRefreshToken = "RT:test1@naver.com";
         String deviceId = "test-deviceId";
 
-        Authentication authentication = new TestingAuthenticationToken("testUser@naver.com", "password");
+        Authentication authentication = new TestingAuthenticationToken("test@naver.com", "password");
 
         when(tokenProvider.validateToken(refreshToken)).thenReturn(TokenValidationResult.builder()
                 .valid(true)
@@ -847,7 +855,7 @@ public class UserServiceTest {
                 .valid(true)
                 .tokenErrorReason(TokenValidationResult.TokenErrorReason.VALID)
                 .build());
-        when(tokenProvider.getAuthentication(accessToken)).thenReturn(authentication);
+        when(tokenProvider.getAuthEvenIfExpired(accessToken)).thenReturn(authentication);
         when(redisUtils.get(refreshToken + ":" + deviceId)).thenReturn(redisRefreshToken);
 
         // when & then
@@ -861,8 +869,8 @@ public class UserServiceTest {
     public void 토큰_재발급_성공() {
         // given
         String accessToken = "accessToken";
-        String refreshToken = "testUser@naver.com";
-        String redisRefreshToken = "testUser@naver.com";
+        String refreshToken = "RT:testUser@naver.com:test-deviceId";
+        String redisRefreshToken = "RT:testUser@naver.com:test-deviceId";
         String deviceId = "test-deviceId";
 
         Authentication authentication = new TestingAuthenticationToken("testUser@naver.com", "password");
@@ -876,8 +884,8 @@ public class UserServiceTest {
                 .valid(true)
                 .tokenErrorReason(TokenValidationResult.TokenErrorReason.VALID)
                 .build());
-        when(tokenProvider.getAuthentication(accessToken)).thenReturn(authentication);
-        when(redisUtils.get("RT:" + refreshToken + ":" + deviceId)).thenReturn(redisRefreshToken);
+        when(tokenProvider.getAuthEvenIfExpired(accessToken)).thenReturn(authentication);
+        when(redisUtils.get("RT:" + authentication.getName() + ":" + deviceId)).thenReturn(redisRefreshToken);
         when(tokenProvider.generateToken(any(Authentication.class))).thenReturn(mockTokenResponse);
 
         // when

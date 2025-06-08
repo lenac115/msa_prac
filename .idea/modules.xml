@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/api-gateway/msa-project.api-gateway.main.iml" filepath="$PROJECT_DIR$/.idea/modules/api-gateway/msa-project.api-gateway.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/auth/msa-project.auth.main.iml" filepath="$PROJECT_DIR$/.idea/modules/auth/msa-project.auth.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/chatting/msa-project.chatting.main.iml" filepath="$PROJECT_DIR$/.idea/modules/chatting/msa-project.chatting.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/common-events/msa-project.common-events.main.iml" filepath="$PROJECT_DIR$/.idea/modules/common-events/msa-project.common-events.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/exception/msa-project.exception.main.iml" filepath="$PROJECT_DIR$/.idea/modules/exception/msa-project.exception.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/notification/msa-project.notification.main.iml" filepath="$PROJECT_DIR$/.idea/modules/notification/msa-project.notification.main.iml" />

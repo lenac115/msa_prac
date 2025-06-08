@@ -156,7 +156,7 @@ public class JwtTokenProvider implements InitializingBean {
                     .valid(false)
                     .tokenErrorReason(TokenValidationResult.TokenErrorReason.UNSUPPORTED)
                     .build();
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | NullPointerException e) {
             log.info("JWT claims string is empty.", e);
             return TokenValidationResult.builder()
                     .valid(false)

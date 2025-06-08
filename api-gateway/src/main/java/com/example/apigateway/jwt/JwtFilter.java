@@ -16,6 +16,7 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -51,17 +52,23 @@ public class JwtFilter implements GatewayFilter {
 
         // 토큰 검증
         if (!tokenProvider.validateToken(token).getValid()) {
-            if (tokenProvider.isTokenExpired(token)) {
-                return reissueAccessToken(exchange, chain, token);
-            } else {
-                return handleError(exchange, HttpStatus.UNAUTHORIZED);
+            String path = exchange.getRequest().getPath().toString();
+
+            if (!path.contains("public")) {
+                if (tokenProvider.isTokenExpired(token)) {
+                    return reissueAccessToken(exchange, chain, token);
+                } else {
+                    return handleError(exchange, HttpStatus.UNAUTHORIZED);
+                }
             }
         }
+
 
         // JWT에서 ROLE 정보 가져오기
         Claims claims = tokenProvider.parseClaims(token);
         String auth = claims.get("auth", String.class); // "SELLER" 또는 "BUYER"
         String path = request.getURI().getPath();
+
 
         // 권한 검사
         if (!isAuthorized(path, auth)) {
@@ -102,7 +109,8 @@ public class JwtFilter implements GatewayFilter {
 
     // API 경로별 권한 검사
     public boolean isAuthorized(String path, String role) {
-        Map<String, List<String>> roleMappings = new HashMap<>();
+
+        Map<String, List<String>> roleMappings = new LinkedHashMap<>();
         AntPathMatcher pathMatcher = new AntPathMatcher();
 
         // Auth Service (인증 관련)
@@ -121,21 +129,31 @@ public class JwtFilter implements GatewayFilter {
         roleMappings.put("/payment/**", List.of("BUYER")); // BUYER만 결제 가능
 
         // Product Service (판매자 전용)
-        roleMappings.put("/product/public/reset", List.of("PUBLIC"));
-        roleMappings.put("/product/**", List.of("SELLER")); // SELLER만 접근 가능
+        roleMappings.put("/product/public/**", List.of("PUBLIC"));
+        roleMappings.put("/product/buyer/**", List.of("BUYER"));
+        roleMappings.put("/product/common/**", List.of("BUYER", "SELLER"));
+        roleMappings.put("/product/seller/**", List.of("SELLER")); // SELLER만 접근 가능
 
         for (Map.Entry<String, List<String>> entry : roleMappings.entrySet()) {
             if (pathMatcher.match(entry.getKey(), path)) {
                 List<String> allowedRoles = entry.getValue();
+                System.out.println("요청 경로: " + path);
+                System.out.println("요청 역할: " + role);
+                System.out.println("매칭된 패턴: " + entry.getKey());
+                System.out.println("허용된 역할: " + allowedRoles);
 
                 // 토큰이 아예 없는 사용자도 접근 허용 (PUBLIC 경로만)
-                if (role == null && path.contains("public")) {
+                if ((role == null || role.contains("BUYER") || role.contains("SELLER")) && path.contains("public")) {
                     return true;
                 }
 
-                return role != null && allowedRoles.contains(role);
+                if (role != null && allowedRoles.stream()
+                        .anyMatch(allowed -> allowed.equalsIgnoreCase(role))) {
+                    return true;
+                }
             }
         }
+
         return false; // 기본적으로 차단
     }
 

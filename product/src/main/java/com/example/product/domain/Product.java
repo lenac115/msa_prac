@@ -1,10 +1,7 @@
 package com.example.product.domain;
 
 import com.example.commonevents.product.ProductDto;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -15,6 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Table(name = "product")
 public class Product {
 
     @Id
@@ -22,6 +20,8 @@ public class Product {
     private Long id;
 
     private String productName;
+
+    private String description;
 
     private Integer price;
 

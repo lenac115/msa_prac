@@ -11,11 +11,16 @@ import com.example.product.kafka.ProductProducer;
 import com.example.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.mapping.Collection;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -75,6 +80,16 @@ public class ProductService {
         product.restore(productDto.getQuantity());
     }
 
+    @Transactional(readOnly = true)
+    public List<ProductDto> getList() {
+        return Optional.ofNullable(productRepository.findAll().stream().map(this::convertToProductDto).collect(Collectors.toList()))
+                .orElse(Collections.EMPTY_LIST);
+    }
+
+    @Transactional(readOnly = true)
+    public ProductDto getProduct(Long id) {
+        return convertToProductDto(productRepository.findById(id).orElseThrow(() -> new CustomException(ProductErrorCode.NOT_EXIST_PRODUCT)));
+    }
 
     private Product convertToProduct(ProductDto productDto) {
         return Product.builder()
@@ -82,6 +97,7 @@ public class ProductService {
                 .stock(productDto.getStock())
                 .productName(productDto.getProductName())
                 .price(productDto.getPrice())
+                .description(productDto.getDescription())
                 .build();
     }
 
@@ -91,6 +107,7 @@ public class ProductService {
                 .stock(product.getStock())
                 .productName(product.getProductName())
                 .price(product.getPrice())
+                .description(product.getDescription())
                 .build();
     }
 }

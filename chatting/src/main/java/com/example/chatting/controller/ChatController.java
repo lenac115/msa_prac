@@ -22,7 +22,7 @@ public class ChatController {
 
     @MessageMapping("/chat.send.{orderId}")
     @SendTo("/topic/chat/{orderId}")
-    public ChatMessage sendMessage(@DestinationVariable String orderId, ChatMessageDto message) {
+    public ChatMessage sendMessage(@DestinationVariable Long orderId, ChatMessageDto message) {
         message.setTimestamp(LocalDateTime.now());
         return chatService.saveMessage(message); // DB 저장
     }

@@ -1,6 +1,7 @@
 package com.example.auth.controller;
 
 import com.example.auth.kafka.UserEventProducer;
+import com.example.auth.repository.UserRepository;
 import com.example.auth.service.EmailService;
 import com.example.auth.service.UserService;
 import com.example.commonevents.auth.ChangePasswordReq;
@@ -22,6 +23,7 @@ public class UserController {
     private final UserService userService;
     private final EmailService emailService;
     private final UserEventProducer userEventProducer;
+    private final UserRepository userRepository;
 
     @PostMapping("/public/login")
     public ResponseEntity<TokenResponse> login(@RequestBody UserDto userDto, @RequestHeader("X-device-Id") String deviceId) {
@@ -37,8 +39,8 @@ public class UserController {
 
     @GetMapping("/common/get/me")
     public ResponseEntity<Object> getMyInfo(@AuthenticationPrincipal UserDetails userDetails) {
-        userEventProducer.sendUserInfo(userService.getUser(userDetails.getUsername()));
-        return ResponseEntity.status(HttpStatus.OK).body("User-info transport");
+        UserDto userDto = userService.getUser(userDetails.getUsername());
+        return ResponseEntity.status(HttpStatus.OK).body(userDto);
     }
 
     @GetMapping("/seller/get/user/list")
