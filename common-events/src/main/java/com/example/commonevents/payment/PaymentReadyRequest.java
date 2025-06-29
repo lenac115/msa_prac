@@ -12,7 +12,8 @@ import lombok.NoArgsConstructor;
 @Builder
 public class PaymentReadyRequest {
 
-    private Long orderId;
+    private String paymentKey;
+    private String orderEventId;
     private Integer amount;
     private Status status;
 }

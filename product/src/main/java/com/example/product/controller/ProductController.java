@@ -24,7 +24,7 @@ public class ProductController {
         return ResponseEntity.status(HttpStatus.CREATED).body(productService.create(productDto));
     }
 
-    @PostMapping("/buyer/update")
+    @PostMapping("/seller/update")
     public ResponseEntity<ProductDto> updateProduct(@RequestBody ProductDto productDto) {
 
         return ResponseEntity.status(HttpStatus.OK).body(productService.updateProduct(productDto));

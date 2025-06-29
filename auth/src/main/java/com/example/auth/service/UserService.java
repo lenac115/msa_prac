@@ -250,6 +250,7 @@ public class UserService {
     private User convertUserDto(UserDto userDto) {
         return User.builder()
                 .phone(userDto.getPhone())
+                .money(userDto.getMoney())
                 .email(userDto.getEmail())
                 .password(userDto.getPassword())
                 .name(userDto.getName())
@@ -264,6 +265,7 @@ public class UserService {
         return UserDto.builder()
                 .id(user.getId())
                 .phone(user.getPhone())
+                .money(user.getMoney())
                 .email(user.getEmail())
                 .name(user.getName())
                 .auth(user.getAuth())

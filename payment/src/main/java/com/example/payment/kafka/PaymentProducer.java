@@ -21,9 +21,9 @@ public class PaymentProducer {
     public void sendPaymentSuccess(PaymentDto paymentDto) {
         log.info("Sending payment success event to Kafka: {}", paymentDto);
         kafkaTemplate.send("payment-success-topic", PaymentCompletedEvent.builder()
-                        .paymentId(paymentDto.getId())
+                        .paymentId(paymentDto.getPaymentKey())
                         .eventId(UUID.randomUUID().toString())
-                        .orderId(paymentDto.getOrderId())
+                        .orderEventId(paymentDto.getOrderEventId())
                         .timestamp(Instant.now())
                         .eventType("PAYMENT_SUCCESS")
                 .build());
@@ -32,9 +32,9 @@ public class PaymentProducer {
     public void sendPaymentFailure(PaymentDto paymentDto) {
         log.info("Sending payment failure event to Kafka: {}", paymentDto);
         kafkaTemplate.send("payment-failure-topic", PaymentCompletedEvent.builder()
-                .paymentId(paymentDto.getId())
+                .paymentId(paymentDto.getPaymentKey())
                 .eventId(UUID.randomUUID().toString())
-                .orderId(paymentDto.getOrderId())
+                .orderEventId(paymentDto.getOrderEventId())
                 .timestamp(Instant.now())
                 .eventType("PAYMENT_FAILURE")
                 .build());

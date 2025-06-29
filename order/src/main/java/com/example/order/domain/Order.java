@@ -26,6 +26,9 @@ public class Order {
     @NotNull
     private Long buyerId;
 
+    @NotNull
+    private String orderEventId;
+
     @Enumerated(EnumType.STRING)
     @Builder.Default
     private Status status = Status.PENDING;

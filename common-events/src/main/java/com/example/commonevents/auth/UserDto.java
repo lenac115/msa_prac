@@ -21,4 +21,5 @@ public class UserDto {
     private String phone;
     private Auth auth;
     private LocalDate birthDay;
+    private Integer money;
 }

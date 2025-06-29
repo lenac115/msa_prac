@@ -1,5 +1,6 @@
 import axios from 'axios';
 import {getOrCreateDeviceId} from '@/utils/deviceId';
+import { setCookie, getCookie, deleteCookie, hasCookie } from 'cookies-next';
 
 const instance = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_BASE_URL, // 환경변수에서 API 주소 가져오기
@@ -15,7 +16,7 @@ instance.interceptors.request.use(
             delete config.headers['x-ignore-interceptor'];
             return config;
         }
-        const accessToken = localStorage.getItem('accessToken');
+        const accessToken = getCookie('accessToken');
         if (accessToken) {
             config.headers['Authorization'] = `Bearer ${accessToken}`;
         }
@@ -31,7 +32,10 @@ instance.interceptors.response.use(
     (response) => {
         const newAccessToken = response.headers['new-access-token'];
         if (newAccessToken) {
-            localStorage.setItem('accessToken', newAccessToken);
+            setCookie('accessToken', newAccessToken, {
+                path: '/',
+                maxAge: 60 * 60,
+            });        
         }
         return response;
     },

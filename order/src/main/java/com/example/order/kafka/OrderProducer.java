@@ -1,7 +1,8 @@
 package com.example.order.kafka;
 
-import com.example.commonevents.order.OrderCancelledEvent;
+import com.example.commonevents.order.OrderCancelEvent;
 import com.example.commonevents.order.OrderCreatedEvent;
+import com.example.commonevents.order.OrderDto;
 import com.example.commonevents.order.OrderedProductDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,11 +23,11 @@ public class OrderProducer {
         kafkaTemplate.send("order-created-topic", event);
     }
 
-    public void sendOrderCancelledEvent(OrderCancelledEvent event) {
-        kafkaTemplate.send("order-cancelled-topic", event);
+    public void sendProductRestore(List<OrderedProductDto> event) {
+        kafkaTemplate.send("order-restore-topic", event);
     }
 
-    public void sendProductRestore(List<OrderedProductDto> event) {
+    public void sendOrderCancelEvent(OrderCancelEvent event) {
         kafkaTemplate.send("order-restore-topic", event);
     }
 }

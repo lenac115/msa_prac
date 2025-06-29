@@ -53,7 +53,7 @@ public class JwtTokenProvider implements InitializingBean {
         System.out.println("authorities: " + authorities);
         long now = (new Date()).getTime();
         // Access Token 생성
-        Date accessTokenExpiresIn = new Date(now + 3600000);
+        Date accessTokenExpiresIn = new Date(now + (1000 * 60));
         String accessToken = Jwts.builder()
                 .setSubject(authentication.getName())
                 .claim("auth", authorities)
@@ -63,6 +63,8 @@ public class JwtTokenProvider implements InitializingBean {
 
         // Refresh Token 생성
         String refreshToken = Jwts.builder()
+                .setSubject(authentication.getName())
+                .claim("auth", authorities)
                 .setExpiration(new Date(now + 259200000))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();

@@ -17,6 +17,7 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.UUID;
 
@@ -39,8 +40,8 @@ public class PaymentService {
         return convertPaymentDto(payment);
     }
 
-    public PaymentDto getPaymentByOrderId(Long orderId) {
-        Payment payment = paymentRepository.findByOrderId(orderId, Status.PENDING)
+    public PaymentDto getPaymentByOrderId(String orderEventId) {
+        Payment payment = paymentRepository.findByOrderEventId(orderEventId, Status.PENDING)
                 .orElseThrow(() -> new CustomException(PaymentErrorCode.NOT_EXIST_PAYMENT));
         return convertPaymentDto(payment);
     }
@@ -79,7 +80,8 @@ public class PaymentService {
         }
 
         int responseCode = connection.getResponseCode();
-        Payment payment = paymentRepository.findByOrderId(request.getOrderId(), Status.PENDING)
+        System.out.println(request);
+        Payment payment = paymentRepository.findByOrderEventId(request.getOrderEventId(), Status.PENDING)
                 .orElseThrow(() -> new CustomException(PaymentErrorCode.NOT_EXIST_PAYMENT));
 
         try (InputStream responseStream = (responseCode >= 200 && responseCode < 300)
@@ -107,37 +109,40 @@ public class PaymentService {
 
         paymentProducer.sendPaymentSuccess(convertPaymentDto(payment));
 
-        log.info("결제 성공: 주문 ID={}, 결제 키={}", payment.getOrderId(), payment.getPaymentKey());
+        log.info("결제 성공: 주문 ID={}, 결제 키={}", payment.getOrderEventId(), payment.getPaymentKey());
     }
 
 
     @Transactional
     public void processPaymentFailure(Payment payment) {
         paymentProducer.sendPaymentFailure(convertPaymentDto(payment));
-        log.info("결제 실패: 주문 ID={}", payment.getOrderId());
+        log.info("결제 실패: 주문 ID={}", payment.getOrderEventId());
         throw new CustomException(PaymentErrorCode.FAILED_VALIDATION);
     }
 
 
     @Transactional
-    public void cancel(Long paymentId) {
+    public void cancel(String paymentKey) {
 
-        Payment payment = paymentRepository.findById(paymentId).orElseThrow();
+        Payment payment = paymentRepository.findByPaymentKey(paymentKey).orElseThrow();
         payment.cancel();
         paymentProducer.sendStockRestore(StockRestoreEvent.builder()
                 .eventId(UUID.randomUUID().toString())
-                .orderId(payment.getOrderId())
+                .orderEventId(payment.getOrderEventId())
                 .eventType("STOCK_RESTORE")
                 .build());
     }
 
     @Transactional
     public PaymentDto createPayment(PaymentReadyRequest request) {
-
+        System.out.println(request.getOrderEventId());
         Payment payment = Payment.builder()
-                .orderId(request.getOrderId())
+                .paymentKey(request.getPaymentKey())
                 .amount(request.getAmount())
                 .status(Status.PENDING)
+                .orderEventId(request.getOrderEventId())
+                .createdAt(LocalDateTime.now())
+                .approvedAt(LocalDateTime.now())
                 .build();
 
         return convertPaymentDto(paymentRepository.save(payment));
@@ -149,7 +154,7 @@ public class PaymentService {
                 .createdAt(paymentDto.getCreatedAt())
                 .id(paymentDto.getId())
                 .approvedAt(paymentDto.getApprovedAt())
-                .orderId(paymentDto.getOrderId())
+                .orderEventId(paymentDto.getOrderEventId())
                 .status(paymentDto.getStatus())
                 .paymentKey(paymentDto.getPaymentKey())
                 .build();
@@ -161,7 +166,7 @@ public class PaymentService {
                 .createdAt(payment.getCreatedAt())
                 .approvedAt(payment.getApprovedAt())
                 .id(payment.getId())
-                .orderId(payment.getOrderId())
+                .orderEventId(payment.getOrderEventId())
                 .status(payment.getStatus())
                 .paymentKey(payment.getPaymentKey())
                 .build();

@@ -12,8 +12,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PaymentDto {
-    private String id;
-    private Long orderId;  // 주문 ID
+    private Long id;
+    private String orderEventId;  // 주문 ID
     private LocalDateTime approvedAt;
     private Integer amount; // 결제 금액
     private Status status; // 결제 상태 (PENDING, COMPLETED, FAILED)

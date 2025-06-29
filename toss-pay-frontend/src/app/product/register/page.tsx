@@ -51,6 +51,7 @@ export default function ProductRegiPage() {
         } catch (err: any) {
             console.error(err);
             setError(err.response?.data?.message || '상품 등록 실패');
+            alert('상품 등록 실패');
         }
     }
 

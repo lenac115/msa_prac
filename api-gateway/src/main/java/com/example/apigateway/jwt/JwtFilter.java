@@ -34,6 +34,7 @@ public class JwtFilter implements GatewayFilter {
 
         // Authorization 헤더 확인
         String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             String path = exchange.getRequest().getPath().toString();
             // 권한 체크는 해야 함
@@ -43,26 +44,25 @@ public class JwtFilter implements GatewayFilter {
             return chain.filter(exchange); // 인증 없이 허용
         }
 
+        String token = authHeader.substring(7);
+        String deviceId = request.getHeaders().getFirst("X-Device-Id");
         // Device Id 헤더 확인
-        if (request.getHeaders().get("X-Device-Id") == null) {
+        if (deviceId == null) {
             return handleError(exchange, HttpStatus.BAD_REQUEST);
         }
 
-        String token = authHeader.substring(7);
-
         // 토큰 검증
-        if (!tokenProvider.validateToken(token).getValid()) {
+        if (tokenProvider.validateToken(token).getTokenErrorReason() == TokenValidationResult.TokenErrorReason.EXPIRED) {
             String path = exchange.getRequest().getPath().toString();
 
             if (!path.contains("public")) {
                 if (tokenProvider.isTokenExpired(token)) {
-                    return reissueAccessToken(exchange, chain, token);
+                    return reissueAccessToken(exchange, chain, token, deviceId);
                 } else {
                     return handleError(exchange, HttpStatus.UNAUTHORIZED);
                 }
             }
         }
-
 
         // JWT에서 ROLE 정보 가져오기
         Claims claims = tokenProvider.parseClaims(token);
@@ -76,23 +76,38 @@ public class JwtFilter implements GatewayFilter {
             System.out.println(auth);
             return handleError(exchange, HttpStatus.FORBIDDEN);
         }
-
+        System.out.println(exchange.getResponse().getHeaders());
         return chain.filter(exchange);
     }
 
-    private Mono<Void> reissueAccessToken(ServerWebExchange exchange, GatewayFilterChain chain, String expiredToken) {
+    private Mono<Void> reissueAccessToken(ServerWebExchange exchange, GatewayFilterChain chain, String expiredToken, String deviceId) {
         Authentication authentication = tokenProvider.getAuthentication(expiredToken);
-        String refreshToken = (String) redisUtils.get("RT:" + authentication.getName());
-        if (refreshToken == null) {
+        String refreshToken = (String) redisUtils.get("RT:" + authentication.getName() + ":" + deviceId);
+        if(refreshToken == null) {
+            return handleError(exchange, HttpStatus.UNAUTHORIZED);
+        }
+        refreshToken = refreshToken.replaceAll("^\"|\"$", "");
+
+        if (!tokenProvider.validateToken(refreshToken).getValid()) {
+            System.out.println("reissue access token");
             return handleError(exchange, HttpStatus.UNAUTHORIZED);
         }
 
+        Mono<TokenResponse> tokenResponse = Mono.just(TokenResponse.builder()
+                .accessToken(expiredToken)
+                .refreshToken(refreshToken)
+                .tokenType("Bearer")
+                .build());
+
         // `auth-service`에 `reissue` 요청 보내기
-        return webClientBuilder.build()
+        return webClientBuilder
+                .baseUrl("http://localhost:8081")
+                .build()
                 .post()
-                .uri("/auth/common/reissue")
+                .uri("/auth/public/reissue")
                 .header("Authorization", "Bearer " + expiredToken)
-                .header("Refresh-Token", refreshToken)
+                .header("X-Device-Id", deviceId)
+                .body(tokenResponse, TokenResponse.class)
                 .retrieve()
                 .bodyToMono(TokenResponse.class)
                 .flatMap(response -> {
@@ -100,6 +115,7 @@ public class JwtFilter implements GatewayFilter {
                     ServerHttpRequest mutatedRequest = exchange.getRequest()
                             .mutate()
                             .header("Authorization", "Bearer " + response.getAccessToken())
+                            .header("X-Device-Id", deviceId)
                             .build();
                     exchange.getResponse().getHeaders().add("New-Access-Token", response.getAccessToken());
                     // request 교체 후 체인 필터 진행
@@ -126,7 +142,7 @@ public class JwtFilter implements GatewayFilter {
         roleMappings.put("/order/common/**", List.of("BUYER", "SELLER")); // BUYER & SELLER 둘 다 가능
         // Payment Service (결제 관련)
         roleMappings.put("/payment/public/reset", List.of("PUBLIC"));
-        roleMappings.put("/payment/**", List.of("BUYER")); // BUYER만 결제 가능
+        roleMappings.put("/payment/**", List.of("BUYER", "SELLER")); // BUYER만 결제 가능
 
         // Product Service (판매자 전용)
         roleMappings.put("/product/public/**", List.of("PUBLIC"));

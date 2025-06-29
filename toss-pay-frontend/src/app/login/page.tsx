@@ -3,7 +3,7 @@
 import React, {useState} from 'react';
 import axios from '@/lib/axios';
 import {useRouter} from 'next/navigation';
-import {headers} from 'next/headers';
+import { setCookie, getCookie, deleteCookie, hasCookie } from 'cookies-next';
 
 export default function LoginPage() {
     const router = useRouter();
@@ -24,14 +24,22 @@ export default function LoginPage() {
                     },
                 }
             );
-            localStorage.setItem('accessToken', response.data.accessToken);
+            setCookie('accessToken', response.data.accessToken, {
+                path: '/',
+                maxAge: 60 * 60,
+            });   
             console.log('로그인 성공:', response.data);
             router.push('/main'); // 메인 페이지로 이동
         } catch (err: any) {
             console.error(err);
             setError(err.response?.data?.message || '로그인 실패');
+            alert('로그인 실패');
         }
     };
+
+    if(hasCookie('accessToken')) {
+        router.push('/main');
+    }
 
     const handleGoToSignup = () => {
         router.push('/signup');

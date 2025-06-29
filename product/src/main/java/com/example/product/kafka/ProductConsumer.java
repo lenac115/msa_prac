@@ -3,6 +3,7 @@ package com.example.product.kafka;
 import com.example.commonevents.order.OrderCreatedEvent;
 import com.example.commonevents.order.OrderedProductDto;
 import com.example.product.service.ProductService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -16,6 +17,7 @@ import java.util.List;
 public class ProductConsumer {
 
     private final ProductService productService;
+    private final ObjectMapper objectMapper;
 
     @KafkaListener(topics = "order-created-topic", groupId = "order-created-group")
     public void handleStockCheckProcess(OrderCreatedEvent event) {
@@ -24,8 +26,12 @@ public class ProductConsumer {
     }
 
     @KafkaListener(topics = "order-restore-topic", groupId = "order-restore-group")
-    public void handleStockResotre(List<OrderedProductDto> list) {
+    public void handleStockResotre(List<Object> list) {
         log.info("Received Kafka message: {}", list);
-        list.forEach(productService::restoreStock);
+
+        List<OrderedProductDto> productList = list.stream()
+                        .map(obj -> objectMapper.convertValue(obj, OrderedProductDto.class))
+                                .toList();
+        productList.forEach(productService::restoreStock);
     }
 }

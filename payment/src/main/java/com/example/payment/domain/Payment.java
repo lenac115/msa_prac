@@ -18,11 +18,13 @@ import java.time.LocalDateTime;
 public class Payment {
 
     @Id
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    private Long orderId;
+    private String orderEventId;
     private Integer amount;
     private String paymentKey;
+
     private LocalDateTime approvedAt;
 
 

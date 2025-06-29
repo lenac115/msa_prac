@@ -13,6 +13,7 @@ public class OrderedProductDto {
 
     private Long id;
     private Long productId;
+    private Long orderId;
     private Integer quantity;
     private Integer price;
 }

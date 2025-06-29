@@ -29,6 +29,8 @@ public class User {
 
     private String phone;
 
+    private Integer money;
+
     private LocalDate birthday;
 
     @Enumerated(EnumType.STRING)

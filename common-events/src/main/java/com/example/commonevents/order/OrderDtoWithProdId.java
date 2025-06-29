@@ -5,17 +5,16 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
 import java.util.List;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class OrderCancelledEvent {
-
-    private String eventId;
-    private String eventType;
-    private List<OrderedProductDto> orderedProducts;
-    private Instant timestamp;
+public class OrderDtoWithProdId {
+    public Long id;
+    public String orderEventId;
+    public Long buyerId;
+    public List<Long> productId;
+    public Status status = Status.PENDING;
 }

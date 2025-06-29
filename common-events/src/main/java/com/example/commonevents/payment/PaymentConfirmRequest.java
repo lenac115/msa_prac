@@ -12,6 +12,6 @@ import lombok.NoArgsConstructor;
 public class PaymentConfirmRequest {
 
     private String payToken;
-    private Long orderId;
+    private String orderEventId;
     private Integer totalAmount;
 }

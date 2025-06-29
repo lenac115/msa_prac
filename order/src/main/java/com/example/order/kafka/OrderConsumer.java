@@ -37,6 +37,7 @@ public class OrderConsumer {
     @KafkaListener(topics = "stock-restore-topic", groupId = "stock-restore-group")
     public void handleStockRestore(StockRestoreEvent event) {
         log.info("Received Kafka message: {}", event);
+        orderService.cancelOrder(event.getOrderEventId());
         orderService.productStockRestore(event);
     }
 }

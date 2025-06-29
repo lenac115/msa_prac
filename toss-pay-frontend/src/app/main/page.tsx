@@ -4,9 +4,10 @@ import React, {useEffect, useState, useRef} from "react";
 import axios from '@/lib/axios';
 import Link from 'next/link';
 import {useRouter} from "next/navigation";
+import { deleteCookie } from "cookies-next";
 
 
-interface ProductDto {
+interface ProductInfo {
     id: number;
     productName: string;
     price: number;
@@ -25,14 +26,14 @@ export default function mainPage() {
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
     const [user, setUser] = useState<UserInfo | null>(null);
-    const [products, setProducts] = useState<ProductDto[]>([]);
+    const [products, setProducts] = useState<ProductInfo[]>([]);
     const hasFetched = useRef(false);
 
     useEffect(() => {
         if (hasFetched.current) return;
         hasFetched.current = true;
 
-        const fetchUser = async () => {
+        const fetchProductAndUser = async () => {
 
             try {
                 const response = await axios.get('http://localhost:8080/auth/common/get/me');
@@ -40,14 +41,14 @@ export default function mainPage() {
             } catch (err: any) {
                 console.error(err);
                 setError(err.response?.data?.message || '올바르지 않은 유저 정보입니다.');
+                alert('올바르지 않은 유저 정보입니다.');
                 setUser(null);
                 setTimeout(() => {
                     router.push('/login'); // 로그인 페이지로 이동
                 }, 2000); // 2초 후에 로그인 페이지로 이동
+                return;
             }
-        };
-
-        const fetchProduct = async () => {
+        
             try {
                 const response = await axios.get('http://localhost:8080/product/common/get/list');
                 const sorted = response.data.sort((a: { id: number; }, b: { id: number; }) => a.id - b.id); // id 기준 정렬
@@ -55,23 +56,27 @@ export default function mainPage() {
             } catch (err: any) {
                 console.error(err);
                 setError(err.response?.data?.message || '제품 목록을 불러오지 못했습니다.');
+                alert('제품 목록을 불러오지 못했습니다.');
                 setTimeout(() => {
                     router.refresh();
                 }, 2000);
             }
         }
 
-        fetchUser();
-        fetchProduct();
+        fetchProductAndUser();
     })
 
     const handleLogout = () => {
-        localStorage.removeItem('accessToken');
+        deleteCookie('accessToken');
         router.push('/login');
     };
 
     const handleProductRegi = () => {
         router.push('/product/register');
+    }
+    
+    const handleOrderList = () => {
+        router.push('/order');
     }
 
     return (
@@ -84,7 +89,7 @@ export default function mainPage() {
                         <span className="ml-3 text-sm text-gray-600">({user.auth})</span>
                     </div>
                 ) : (
-                    <div className="text-red-600">로그인 정보 없음</div>
+                    <div className="text-red-600">유저 로딩중</div>
                 )}
                 <button
                     onClick={handleLogout}
@@ -108,6 +113,9 @@ export default function mainPage() {
                         <p>{product.stock}개</p>
                     </div>
                 ))}
+            </div>
+
+            <footer className="flex justify-between items-center mb-6 margin-top-10px">
                 {
                     user?.auth === 'SELLER' &&
                     (<button
@@ -117,7 +125,12 @@ export default function mainPage() {
                         </button>
                     )
                 }
-            </div>
+                <button
+                onClick={handleOrderList}
+                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                    구매 목록
+                </button>
+            </footer>
         </div>
     );
 }

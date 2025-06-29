@@ -92,6 +92,7 @@ export default function SignupPage() {
         } catch (err: any) {
             console.error(err);
             setError(err.response?.data?.message || '회원가입 실패');
+            alert('회원가입 실패');
         }
     };
 

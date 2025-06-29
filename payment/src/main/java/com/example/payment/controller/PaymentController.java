@@ -26,7 +26,7 @@ public class PaymentController {
     }
 
     @GetMapping("/order/{orderId}")
-    public ResponseEntity<PaymentDto> getPaymentByOrderId(@PathVariable Long orderId) {
+    public ResponseEntity<PaymentDto> getPaymentByOrderId(@PathVariable String orderId) {
         PaymentDto paymentDto = paymentService.getPaymentByOrderId(orderId);
         System.out.println(paymentDto.getPaymentKey());
         return ResponseEntity.status(HttpStatus.OK)
@@ -34,7 +34,7 @@ public class PaymentController {
     }
 
     @PostMapping("/delete/{paymentId}")
-    public ResponseEntity<Object> deletePayment(@PathVariable Long paymentId) {
+    public ResponseEntity<Object> deletePayment(@PathVariable String paymentId) {
 
         paymentService.cancel(paymentId);
         return ResponseEntity.status(HttpStatus.OK)
@@ -43,6 +43,8 @@ public class PaymentController {
 
     @PostMapping("/confirm")
     public ResponseEntity<?> confirmPayment(@RequestBody PaymentConfirmRequest request) throws IOException {
+        System.out.println("paymentConfirm");
+        System.out.println(request);
         paymentService.processPaymentRequest(request);
         return ResponseEntity.ok().body("Payment Successful");
     }
