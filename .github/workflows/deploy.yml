@@ -21,5 +21,21 @@ jobs:
 
       - name: Build and Push Docker Images
         run: |
-          docker-compose -f docker-compose.yml build
-          docker-compose -f docker-compose.yml push
+          docker-compose -f service-module.yml build
+          docker-compose -f database-docker.yml build
+          docker-compose -f zookeeper-kafka.yml build
+          docker-compose -f service-module.yml push
+          docker-compose -f database-docker.yml push
+          docker-compose -f zookeeper-kafka.yml push
+
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/msa-project
+            git pull
+            docker-compose pull
+            docker-compose up -d
