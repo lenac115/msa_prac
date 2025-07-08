@@ -67,7 +67,7 @@ project(":exception") {
 }
 
 // 각 마이크로서비스 모듈 설정
-["auth", "payment", "order", "product", "api-gateway", "notification", "chatting"].each { module ->
+["auth", "payment", "order", "product", "api-gateway", "notification", "chatting", "discovery-service"].each { module ->
     project(":${module}") {
         bootJar { enabled = true }
         jar { enabled = true }

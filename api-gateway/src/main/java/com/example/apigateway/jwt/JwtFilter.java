@@ -5,14 +5,19 @@ import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.http.server.reactive.ServerHttpRequestDecorator;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.HashMap;
@@ -31,8 +36,46 @@ public class JwtFilter implements GatewayFilter {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
+        HttpMethod method = request.getMethod();
 
-        // Authorization 헤더 확인
+        if (method == HttpMethod.POST || method == HttpMethod.PUT || method == HttpMethod.PATCH) {
+            return DataBufferUtils.join(request.getBody())
+                    .flatMap(dataBuffer -> {
+                        byte[] bytes = new byte[dataBuffer.readableByteCount()];
+                        dataBuffer.read(bytes);
+                        DataBufferUtils.release(dataBuffer);
+
+                        Flux<DataBuffer> cachedBody = Flux.defer(() ->
+                                Mono.just(exchange.getResponse().bufferFactory().wrap(bytes)));
+
+                        ServerHttpRequest mutatedRequest = new ServerHttpRequestDecorator(request) {
+                            @Override
+                            public Flux<DataBuffer> getBody() {
+                                return cachedBody;
+                            }
+                        };
+
+                        ServerWebExchange mutatedExchange = exchange.mutate().request(mutatedRequest).build();
+                        return doJwtFilterLogic(mutatedExchange, chain, bytes);
+                    });
+        }
+
+        return doJwtFilterLogic(exchange, chain, new byte[0]);
+    }
+
+    private Mono<Void> doJwtFilterLogic(ServerWebExchange exchange, GatewayFilterChain chain, byte[] bodyBytes) {
+        // 본문을 보존하기 위해 요청을 래핑
+        ServerHttpRequest wrappedRequest = new ServerHttpRequestDecorator(exchange.getRequest()) {
+            @Override
+            public Flux<DataBuffer> getBody() {
+                return exchange.getRequest().getBody().cache(); // 본문 캐싱
+            }
+        };
+
+        ServerWebExchange mutatedExchange = exchange.mutate().request(wrappedRequest).build();
+
+        // 기존 필터 로직 수행 (모든 로직에서 mutatedExchange 사용)
+        ServerHttpRequest request = mutatedExchange.getRequest();
         String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -78,6 +121,7 @@ public class JwtFilter implements GatewayFilter {
         }
         System.out.println(exchange.getResponse().getHeaders());
         return chain.filter(exchange);
+
     }
 
     private Mono<Void> reissueAccessToken(ServerWebExchange exchange, GatewayFilterChain chain, String expiredToken, String deviceId) {
@@ -86,28 +130,27 @@ public class JwtFilter implements GatewayFilter {
         if(refreshToken == null) {
             return handleError(exchange, HttpStatus.UNAUTHORIZED);
         }
+
         refreshToken = refreshToken.replaceAll("^\"|\"$", "");
 
         if (!tokenProvider.validateToken(refreshToken).getValid()) {
-            System.out.println("reissue access token");
             return handleError(exchange, HttpStatus.UNAUTHORIZED);
         }
 
-        Mono<TokenResponse> tokenResponse = Mono.just(TokenResponse.builder()
+        TokenResponse tokenRequest = TokenResponse.builder()
                 .accessToken(expiredToken)
                 .refreshToken(refreshToken)
                 .tokenType("Bearer")
-                .build());
+                .build();
 
-        // `auth-service`에 `reissue` 요청 보내기
         return webClientBuilder
-                .baseUrl("http://localhost:8081")
+                .baseUrl("http://auth-service:8081")
                 .build()
                 .post()
                 .uri("/auth/public/reissue")
                 .header("Authorization", "Bearer " + expiredToken)
                 .header("X-Device-Id", deviceId)
-                .body(tokenResponse, TokenResponse.class)
+                .bodyValue(tokenRequest)
                 .retrieve()
                 .bodyToMono(TokenResponse.class)
                 .flatMap(response -> {
@@ -117,8 +160,9 @@ public class JwtFilter implements GatewayFilter {
                             .header("Authorization", "Bearer " + response.getAccessToken())
                             .header("X-Device-Id", deviceId)
                             .build();
+
+                    // ✅ 응답 본문은 절대 건드리지 않고 그대로 전달
                     exchange.getResponse().getHeaders().add("New-Access-Token", response.getAccessToken());
-                    // request 교체 후 체인 필터 진행
                     return chain.filter(exchange.mutate().request(mutatedRequest).build());
                 });
     }

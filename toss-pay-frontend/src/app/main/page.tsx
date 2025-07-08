@@ -42,15 +42,20 @@ export default function mainPage() {
                 console.error(err);
                 setError(err.response?.data?.message || '올바르지 않은 유저 정보입니다.');
                 alert('올바르지 않은 유저 정보입니다.');
+                deleteCookie("accessToken");
                 setUser(null);
-                setTimeout(() => {
-                    router.push('/login'); // 로그인 페이지로 이동
-                }, 2000); // 2초 후에 로그인 페이지로 이동
+                try {
+                    await router.push('/login');
+                } catch (routerError) {
+                    console.error('라우팅 실패:', routerError);
+                    window.location.href = '/login'; // 최후의 수단으로 강제 이동
+                }
                 return;
             }
         
             try {
                 const response = await axios.get('http://localhost:8080/product/common/get/list');
+                console.log(response);
                 const sorted = response.data.sort((a: { id: number; }, b: { id: number; }) => a.id - b.id); // id 기준 정렬
                 setProducts(sorted);
             } catch (err: any) {

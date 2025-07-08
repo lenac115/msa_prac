@@ -13,5 +13,5 @@ public class OrderDto {
     public Long id;
     public String orderEventId;
     public Long buyerId;
-    public Status status = Status.PENDING;
+    public Status status;
 }

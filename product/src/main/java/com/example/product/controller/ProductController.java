@@ -18,7 +18,7 @@ public class ProductController {
 
     private final ProductService productService;
 
-    @PostMapping("/buyer/new")
+    @PostMapping("/seller/new")
     public ResponseEntity<ProductDto> createProduct(@RequestBody ProductDto productDto) {
 
         return ResponseEntity.status(HttpStatus.CREATED).body(productService.create(productDto));

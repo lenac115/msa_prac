@@ -16,5 +16,5 @@ public class OrderDtoWithProdId {
     public String orderEventId;
     public Long buyerId;
     public List<Long> productId;
-    public Status status = Status.PENDING;
+    public Status status;
 }

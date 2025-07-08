@@ -19,6 +19,8 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -49,7 +51,9 @@ public class PaymentService {
     @Transactional
     public void processPaymentRequest(PaymentConfirmRequest request) throws IOException {
         // 토스페이먼츠 결제 승인 API 호출
-        Payment payment = sendToTossPayments(request);
+        //Payment payment = sendToTossPayments(request);
+
+        Payment payment = mockingSendToTossPayments(request);
 
         // 결제 상태에 따라 처리 분기
         if (payment.getStatus() == Status.PAID) {
@@ -59,41 +63,61 @@ public class PaymentService {
         }
     }
 
+    private Payment mockingSendToTossPayments(PaymentConfirmRequest request) throws IOException {
+        Payment payment = paymentRepository.findByOrderEventId(request.getOrderEventId(), Status.PENDING)
+                .orElseThrow(() -> new CustomException(PaymentErrorCode.NOT_EXIST_PAYMENT));
+
+        payment.updateStatus(Status.PAID, request.getPayToken());
+
+        return payment;
+    }
+
     private Payment sendToTossPayments(PaymentConfirmRequest request) throws IOException {
 
         String encodedAuth = Base64.getEncoder()
                 .encodeToString((secretKey + ":").getBytes(StandardCharsets.UTF_8));
         String authorizationHeader = "Basic " + encodedAuth;
 
-        URL url = new URL("https://api.tosspayments.com/v2/payments/execute");
+        URL url = new URL("https://api.tosspayments.com/v1/payments/confirm");
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestProperty("Authorization", authorizationHeader);
         connection.setRequestProperty("Content-Type", "application/json");
         connection.setRequestMethod("POST");
         connection.setDoOutput(true);
 
+        Map<String, Object> requestMap = new HashMap<>();
+        requestMap.put("paymentKey", request.getPayToken());
+        requestMap.put("orderId", request.getOrderEventId());
+        requestMap.put("amount", request.getTotalAmount());
+
         // 요청 바디 JSON 작성
-        String requestBody = objectMapper.writeValueAsString(request.getPayToken());
+        String requestBody = objectMapper.writeValueAsString(requestMap);
+
 
         try (OutputStream outputStream = connection.getOutputStream()) {
             outputStream.write(requestBody.getBytes(StandardCharsets.UTF_8));
         }
 
         int responseCode = connection.getResponseCode();
+
+        log.info("Response Code: " + responseCode);
         System.out.println(request);
         Payment payment = paymentRepository.findByOrderEventId(request.getOrderEventId(), Status.PENDING)
                 .orElseThrow(() -> new CustomException(PaymentErrorCode.NOT_EXIST_PAYMENT));
 
-        try (InputStream responseStream = (responseCode >= 200 && responseCode < 300)
+        InputStream responseStream = (responseCode >= 200 && responseCode < 300)
                 ? connection.getInputStream()
                 : connection.getErrorStream();
-             Reader reader = new InputStreamReader(responseStream, StandardCharsets.UTF_8)) {
 
+        if (responseStream == null) {
+            log.error("Toss 응답 스트림이 null입니다. 응답 코드: {}", responseCode);
+            payment.updateStatus(Status.FAILED, request.getPayToken());
+            return payment;
+        }
+
+        try (Reader reader = new InputStreamReader(responseStream, StandardCharsets.UTF_8)) {
             if (responseCode >= 200 && responseCode < 300) {
-
                 payment.updateStatus(Status.PAID, request.getPayToken());
-
-                return payment;
             } else {
                 payment.updateStatus(Status.FAILED, request.getPayToken());
                 ErrorResponse errorResponse = objectMapper.readValue(reader, ErrorResponse.class);

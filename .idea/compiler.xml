@@ -14,6 +14,7 @@
         <module name="msa-project.auth.main" />
         <module name="msa-project.product.main" />
         <module name="msa-project.payment.main" />
+        <module name="msa-project.discovery-service.main" />
       </profile>
       <profile name="Gradle Imported" enabled="true">
         <outputRelativeToContentRoot value="true" />

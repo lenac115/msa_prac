@@ -5,3 +5,4 @@
 /product/src/main/resources/application-test.yml
 /payment/src/main/resources/application-test.yml
 node_modules
+/discovery-service/src/main/resources/application-local.yml
