@@ -32,7 +32,14 @@ jobs:
           java-version: '17'
 
       - name: Build with Gradle
-        run: ./gradlew clean build
+        run: |
+          ./gradlew :auth:clean :auth:build
+          ./gradlew :api-gateway:clean :api-gateway:build
+          ./gradlew :discovery-service:clean :discovery-service:build
+          ./gradlew :order:clean :order:build
+          ./gradlew :payment:clean :payment:build
+          ./gradlew :product:clean :product:build
+          
 
       - name: Build and Push Docker Images
         run: |
