@@ -34,6 +34,9 @@ jobs:
       - name: Grant execute permission to gradlew
         run: chmod +x gradlew
 
+      - name: Initialize Gradle Wrapper (if gradlew is missing)
+        run: gradle wrapper
+
       - name: Build with Gradle
         run: |
           ./gradlew :auth:clean :auth:build
