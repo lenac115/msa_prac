@@ -37,5 +37,9 @@ jobs:
           script: |
             cd ~/msa-project
             git pull
-            docker-compose pull
-            docker-compose up -d
+            docker-compose -f service-module.yml pull
+            docker-compose -f database-docker.yml pull
+            docker-compose -f zookeeper-kafka.yml pull
+            docker-compose -f service-module.yml up -d
+            docker-compose -f database-docker.yml up -d
+            docker-compose -f zookeeper-kafka.yml up -d
