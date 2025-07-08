@@ -47,7 +47,9 @@ jobs:
           ./gradlew :order:clean :order:build
           ./gradlew :payment:clean :payment:build
           ./gradlew :product:clean :product:build
-          
+
+      - name: Run tests with debug info
+        run: ./gradlew test --info --stacktrace
 
       - name: Build and Push Docker Images
         run: |
