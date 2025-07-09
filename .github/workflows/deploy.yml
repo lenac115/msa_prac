@@ -43,10 +43,10 @@ jobs:
         run: |
           ./gradlew :auth:clean :auth:build -x test
           ./gradlew :api-gateway:clean :api-gateway:build -x test
-          ./gradlew :discovery-service:clean :discovery-service:build
-          ./gradlew :order:clean :order:build
-          ./gradlew :payment:clean :payment:build
-          ./gradlew :product:clean :product:build
+          ./gradlew :discovery-service:clean :discovery-service:build -x test
+          ./gradlew :order:clean :order:build -x test
+          ./gradlew :payment:clean :payment:build -x test
+          ./gradlew :product:clean :product:build -x test
 
       - name: Build and Push Docker Images
         run: |
