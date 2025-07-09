@@ -1,6 +1,7 @@
 version: '3.8'
 services:
   next-dev:
+    image: nightwish115/front-service:latest
     build:
       context: ./toss-pay-frontend
       dockerfile: Dockerfile
