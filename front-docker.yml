@@ -2,8 +2,8 @@ version: '3.8'
 services:
   next-dev:
     build:
-      context: .
-      dockerfile: Dockerfile.dev
+      context: ./toss-pay-frontend
+      dockerfile: Dockerfile
     ports:
       - "3000:3000"
     volumes:
