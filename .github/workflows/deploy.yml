@@ -62,15 +62,6 @@ jobs:
           echo "${{ secrets.EC2_SSH_KEY }}" | base64 -d > ec2_key.pem
           chmod 600 ec2_key.pem
 
-      - name: Create .env file
-        run: |
-          echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> .env
-          echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
-          echo "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" >> .env
-
-      - name: Create Docker network
-        run: docker network create msa-network
-
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v0.1.6
         with:
@@ -83,6 +74,13 @@ jobs:
             fi
             cd ~/msa-project
             git pull
+            
+            docker network create msa-network || true
+            
+            echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> .env
+            echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
+            echo "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" >> .env
+            
             docker-compose -f service-module.yml pull
             docker-compose -f database-docker.yml pull
             docker-compose -f zookeeper-kafka.yml pull
