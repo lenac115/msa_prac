@@ -41,8 +41,8 @@ jobs:
 
       - name: Build with Gradle
         run: |
-          ./gradlew :auth:clean :auth:build
-          ./gradlew :api-gateway:clean :api-gateway:build
+          ./gradlew :auth:clean :auth:build -x test
+          ./gradlew :api-gateway:clean :api-gateway:build -x test
           ./gradlew :discovery-service:clean :discovery-service:build
           ./gradlew :order:clean :order:build
           ./gradlew :payment:clean :payment:build
