@@ -56,9 +56,12 @@ spring:
 
   graphql:
     cors:
-      allowed-origins: "http://localhost:3000"
+      allowed-origins: "http://3.105.113.69:3000"
       allowed-methods: "GET,POST,PUT,DELETE"
       allowed-headers: "Authorization, Content-Type"
+
+front:
+  uri: "http://3.105.113.69:3000"
 
 jwt:
   secret: ${JWT_SECRET}

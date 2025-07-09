@@ -1,5 +1,6 @@
 package com.example.apigateway.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
@@ -12,6 +13,9 @@ import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 @Configuration
 @EnableWebFluxSecurity
 public class SecurityConfig {
+
+    @Value("${front.uri}")
+    private String frontUri;
 
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
@@ -28,7 +32,7 @@ public class SecurityConfig {
     public CorsWebFilter corsWebFilter() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.addAllowedOrigin("http://localhost:3000");
+        config.addAllowedOrigin(frontUri);
         config.addAllowedMethod("*");
         config.addAllowedHeader("*");
         config.addExposedHeader("New-Access-Token");
