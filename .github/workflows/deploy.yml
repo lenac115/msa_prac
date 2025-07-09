@@ -69,6 +69,9 @@ jobs:
           username: ubuntu
           key_path: ec2_key.pem
           script: |
+            if [ ! -d "msa-project" ]; then
+              git clone https://github.com/${{ github.repository }}.git msa-project
+            fi
             cd ~/msa-project
             git pull
             docker-compose -f service-module.yml pull
