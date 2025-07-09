@@ -87,7 +87,7 @@ jobs:
             echo "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" >> .env
             
             docker-compose -f service-module.yml pull
-            docker-compose -f database-docker.yml pull
+            docker-compose --env-file .env -f database-docker.yml pull
             docker-compose -f zookeeper-kafka.yml pull 
             docker-compose -f front-docker.yml pull 
             
