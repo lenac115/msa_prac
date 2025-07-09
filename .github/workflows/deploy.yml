@@ -67,7 +67,7 @@ jobs:
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
-          key: ec2_key.pem
+          key_path: ec2_key.pem
           script: |
             cd ~/msa-project
             git pull
