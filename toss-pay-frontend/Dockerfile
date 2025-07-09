@@ -1,11 +1,13 @@
-FROM node:18-alpine
+FROM node:18-alpine as builder
 
 WORKDIR /app
-RUN corepack enable && corepack prepare yarn@stable --activate
-
-COPY package.json yarn.lock ./
-RUN yarn install --network-timeout 600000
-
 COPY . .
+RUN yarn install
+RUN yarn build
+RUN yarn export
 
-CMD ["yarn", "dev"]
+FROM nginx:alpine
+
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+COPY --from=builder /app/out /usr/share/nginx/html
