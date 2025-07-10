@@ -4,7 +4,8 @@ WORKDIR /app
 
 # 의존성 설치
 COPY package.json package-lock.json ./
-RUN npm install
+RUN npm config set registry https://registry.npmjs.org/ && \
+    npm install --legacy-peer-deps --network-timeout=600000 \
 
 # 앱 전체 복사
 COPY . .
