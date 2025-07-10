@@ -1,13 +1,15 @@
-FROM node:18-alpine as builder
+FROM node:18-alpine
 
 WORKDIR /app
+
+# 의존성 설치
+COPY package.json package-lock.json ./
+RUN npm install
+
+# 앱 전체 복사
 COPY . .
-RUN yarn install
-RUN yarn build || (echo "🛑 Build failed!" && cat /app/.next/trace | true && exit 1)
-RUN yarn export
 
-FROM nginx:alpine
+# 빌드
+RUN npm run build
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-COPY --from=builder /app/out /usr/share/nginx/html
+CMD ["npm", "run", "start"]
