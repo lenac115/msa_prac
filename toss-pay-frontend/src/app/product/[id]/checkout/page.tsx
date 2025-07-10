@@ -1,4 +1,6 @@
 'use client';
+export const dynamic = 'force-dynamic';
+
 
 import {loadTossPayments, TossPaymentsWidgets, ANONYMOUS} from "@tosspayments/tosspayments-sdk";
 import React, {useEffect, useState} from "react";
