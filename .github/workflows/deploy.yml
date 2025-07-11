@@ -75,7 +75,7 @@ jobs:
           key_path: ec2_key.pem
           ssh_options: -o ServerAliveInterval=60 -o ServerAliveCountMax=100
           retries: 3
-          script: |
+          script: | 
             if [ ! -d "msa-project" ]; then
               git clone https://github.com/${{ github.repository }}.git msa-project
             fi
