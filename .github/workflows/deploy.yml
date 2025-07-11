@@ -66,6 +66,25 @@ jobs:
           echo "${{ secrets.EC2_SSH_KEY }}" | base64 -d > ec2_key.pem
           chmod 600 ec2_key.pem
 
+      - name: Deploy to Ec2 via SSH by React
+        uses: appleboy/ssh-action@v0.1.6
+        timeout-minutes: 60
+        with:
+          host: ${{secrets.EC2_HOST}}
+          username: ubuntu
+          key_path: ec2_key.pem
+          script: |
+            if [ ! -d "msa-project" ]; then
+            git clone https://github.com/${{ github.repository }}.git msa-project
+            fi
+            cd ~/msa-project
+            git pull
+            
+            docker network create msa-network || true
+
+            docker-compose -f front-docker.yml pull 
+            docker-compose -f front-docker.yml up -d
+
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v0.1.6
         timeout-minutes: 60
@@ -74,11 +93,7 @@ jobs:
           username: ubuntu
           key_path: ec2_key.pem
           script: | 
-            if [ ! -d "msa-project" ]; then
-              git clone https://github.com/${{ github.repository }}.git msa-project
-            fi
             cd ~/msa-project
-            git pull
             
             docker network create msa-network || true
             
@@ -89,9 +104,7 @@ jobs:
             docker-compose --env-file .env -f database-docker.yml pull
             docker-compose -f zookeeper-kafka.yml pull 
             docker-compose --env-file .env -f service-module.yml pull
-            docker-compose -f front-docker.yml pull 
             
             docker-compose --env-file .env -f database-docker.yml up -d
             docker-compose -f zookeeper-kafka.yml up -d
             docker-compose --env-file .env -f service-module.yml up -d
-            docker-compose -f front-docker.yml up -d
