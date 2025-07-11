@@ -78,7 +78,6 @@ jobs:
             fi
             cd ~/msa-project
             git pull
-      
             
             docker network create msa-network || true
             
