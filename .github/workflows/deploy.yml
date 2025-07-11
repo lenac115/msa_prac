@@ -36,6 +36,7 @@ jobs:
       - name: Grant execute permission to gradlew
         run: chmod +x gradlew
 
+
       - name: Initialize Gradle Wrapper (if gradlew is missing)
         run: gradle wrapper
 
