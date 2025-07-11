@@ -28,4 +28,41 @@
     </annotationProcessing>
     <bytecodeTargetLevel target="17" />
   </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="msa-project" options="-parameters" />
+      <module name="msa-project.api-gateway" options="-parameters" />
+      <module name="msa-project.api-gateway.main" options="-parameters" />
+      <module name="msa-project.api-gateway.test" options="-parameters" />
+      <module name="msa-project.auth" options="-parameters" />
+      <module name="msa-project.auth.main" options="-parameters" />
+      <module name="msa-project.auth.test" options="-parameters" />
+      <module name="msa-project.chatting" options="-parameters" />
+      <module name="msa-project.chatting.main" options="-parameters" />
+      <module name="msa-project.chatting.test" options="-parameters" />
+      <module name="msa-project.common-events" options="-parameters" />
+      <module name="msa-project.common-events.main" options="-parameters" />
+      <module name="msa-project.common-events.test" options="-parameters" />
+      <module name="msa-project.discovery-service" options="-parameters" />
+      <module name="msa-project.discovery-service.main" options="-parameters" />
+      <module name="msa-project.discovery-service.test" options="-parameters" />
+      <module name="msa-project.exception" options="-parameters" />
+      <module name="msa-project.exception.main" options="-parameters" />
+      <module name="msa-project.exception.test" options="-parameters" />
+      <module name="msa-project.main" options="-parameters" />
+      <module name="msa-project.notification" options="-parameters" />
+      <module name="msa-project.notification.main" options="-parameters" />
+      <module name="msa-project.notification.test" options="-parameters" />
+      <module name="msa-project.order" options="-parameters" />
+      <module name="msa-project.order.main" options="-parameters" />
+      <module name="msa-project.order.test" options="-parameters" />
+      <module name="msa-project.payment" options="-parameters" />
+      <module name="msa-project.payment.main" options="-parameters" />
+      <module name="msa-project.payment.test" options="-parameters" />
+      <module name="msa-project.product" options="-parameters" />
+      <module name="msa-project.product.main" options="-parameters" />
+      <module name="msa-project.product.test" options="-parameters" />
+      <module name="msa-project.test" options="-parameters" />
+    </option>
+  </component>
 </project>

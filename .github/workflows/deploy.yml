@@ -71,8 +71,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key_path: ec2_key.pem
-          timeout-minutes: 60
-          command_timeout-minutes: 60
+          timeout-minutes: 360
           script: |
             if [ ! -d "msa-project" ]; then
               git clone https://github.com/${{ github.repository }}.git msa-project
