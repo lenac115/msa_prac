@@ -51,15 +51,15 @@ jobs:
 
       - name: Build and Push Docker Images
         run: |
-          docker-compose -f service-module.yml build
-          docker-compose -f database-docker.yml build
-          docker-compose -f zookeeper-kafka.yml build
-          docker-compose -f front-docker.yml build
+          docker compose -f service-module.yml build
+          docker compose -f database-docker.yml build
+          docker compose -f zookeeper-kafka.yml build
+          docker compose -f front-docker.yml build
           
-          docker-compose -f service-module.yml push
-          docker-compose -f database-docker.yml push 
-          docker-compose -f zookeeper-kafka.yml push
-          docker-compose -f front-docker.yml push
+          docker compose -f service-module.yml push
+          docker compose -f database-docker.yml push 
+          docker compose -f zookeeper-kafka.yml push
+          docker compose -f front-docker.yml push
 
       - name: Decode SSH Front key
         run: |
@@ -110,10 +110,10 @@ jobs:
             echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
             echo "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" >> .env
             
-            docker-compose --env-file .env -f database-docker.yml pull
-            docker-compose -f zookeeper-kafka.yml pull 
-            docker-compose --env-file .env -f service-module.yml pull
+            docker compose --env-file .env -f database-docker.yml pull
+            docker compose -f zookeeper-kafka.yml pull 
+            docker compose --env-file .env -f service-module.yml pull
             
-            docker-compose --env-file .env -f database-docker.yml up -d
-            docker-compose -f zookeeper-kafka.yml up -d
-            docker-compose --env-file .env -f service-module.yml up -d
+            docker compose --env-file .env -f database-docker.yml up -d
+            docker compose -f zookeeper-kafka.yml up -d
+            docker compose --env-file .env -f service-module.yml up -d
