@@ -59,7 +59,7 @@ jobs:
           docker compose -f service-module.yml push
           docker compose -f database-docker.yml push 
           docker compose -f zookeeper-kafka.yml push
-          docker compose -f front-docker.yml push
+          docker compose -f front-docker.yml push 
 
       - name: Decode SSH Front key
         run: |
