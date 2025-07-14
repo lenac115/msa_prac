@@ -37,7 +37,7 @@ export default function ProductRegiPage() {
         }
 
         try {
-            const response = await axios.post('http://localhost:8080/product/seller/new', {
+            const response = await axios.post('http://3.105.113.69:8080/product/seller/new', {
                 productName,
                 description,
                 price,

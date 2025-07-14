@@ -61,16 +61,16 @@ jobs:
           docker-compose -f zookeeper-kafka.yml push
           docker-compose -f front-docker.yml push
 
-      - name: Decode SSH key
+      - name: Decode SSH Front key
         run: |
-          echo "${{ secrets.EC2_SSH_KEY }}" | base64 -d > ec2_key.pem
-          chmod 600 ec2_key.pem
+          echo "${{ secrets.EC2_SSH_KEY_FRONT }}" | base64 -d > ec2_front_key.pem
+          chmod 600 ec2_front_key.pem
 
       - name: Deploy to Ec2 via SSH by React
         uses: appleboy/ssh-action@v0.1.6
         timeout-minutes: 60
         with:
-          host: ${{secrets.EC2_HOST}}
+          host: ${{secrets.EC2_HOST_FRONT}}
           username: ubuntu
           key_path: ec2_key.pem
           script: |
@@ -85,6 +85,11 @@ jobs:
             docker-compose -f front-docker.yml pull 
             docker-compose -f front-docker.yml up -d
 
+      - name: Decode SSH key
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" | base64 -d > ec2_key.pem
+          chmod 600 ec2_key.pem
+
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v0.1.6
         timeout-minutes: 60
@@ -92,9 +97,14 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key_path: ec2_key.pem
-          script: | 
-            cd ~/msa-project
+          script: |
             
+            if [ ! -d "msa-project" ]; then
+            git clone https://github.com/${{ github.repository }}.git msa-project
+            fi
+            cd ~/msa-project
+            git pull
+                  
             docker network create msa-network || true
             
             echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> .env

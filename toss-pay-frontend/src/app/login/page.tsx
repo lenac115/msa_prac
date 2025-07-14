@@ -15,7 +15,7 @@ export default function LoginPage() {
         e.preventDefault();
         setError(null);
         try {
-            const response = await axios.post('http://localhost:8080/auth/public/login', {
+            const response = await axios.post('http://3.105.113.69:8080/auth/public/login', {
                     email,
                     password,
                 }, {

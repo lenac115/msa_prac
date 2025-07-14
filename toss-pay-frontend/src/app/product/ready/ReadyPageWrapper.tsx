@@ -22,7 +22,7 @@ export default function PaymentButton() {
 
     async function cancelPayment() {
         try {
-            axios.post(`http://localhost:8080/payment/delete/${paymentKey}`);
+            axios.post(`http://3.105.113.69:8080/payment/delete/${paymentKey}`);
             alert(`결제가 취소되었습니다.`)
             router.push(`/main`)
         } catch(err) {

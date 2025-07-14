@@ -30,7 +30,7 @@ export default function ProductDetailPage({params}: { params: Promise<{ id: numb
     useEffect(() => {
         async function fetchUser() {
             try {
-                const response = await axios.get(`http://localhost:8080/product/common/get/${productId}`);
+                const response = await axios.get(`http://3.105.113.69:8080/product/common/get/${productId}`);
                 setProduct(response.data);
             } catch (err: any) {
                 console.error(err);
@@ -86,7 +86,7 @@ function BuyButton({ id, price, quantity }: BuyButtonProps) {
                 }];
                 
                 const response = await axios.post(
-                    `http://localhost:8080/order/common/create`, 
+                    `http://3.105.113.69:8080/order/common/create`,
                     newOrder
                 );
                 
