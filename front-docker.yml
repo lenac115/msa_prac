@@ -9,9 +9,9 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./:/app
+      - ./toss-pay-frontend:/app
       - /app/node_modules
-      - /app/.next  # 개발 모드 캐시 유지
+      - /app/.next
     environment:
       - CHOKIDAR_USEPOLLING=true
     networks:
