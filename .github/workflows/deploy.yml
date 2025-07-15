@@ -86,10 +86,15 @@ jobs:
             echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> .env
             echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
             echo "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" >> .env
+            echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+            echo "MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}" >> .env
+            echo "REDIS_USER=${{ secrets.REDIS_USER }}" >> .env
+            echo "REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}" >> .env
+            echo "PAYMENT_KEY=${{ secrets.PAYMENT_KEY }}" >> .env
 
-            docker compose -f front-docker.yml pull 
+            docker compose --env-file .env -f front-docker.yml pull 
             docker compose --env-file .env -f database-docker.yml pull
-            docker compose -f front-docker.yml up -d
+            docker compose --env-file .env -f front-docker.yml up -d
             docker compose --env-file .env -f database-docker.yml up -d
 
       - name: Decode SSH key
@@ -117,9 +122,14 @@ jobs:
             echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> .env
             echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
             echo "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" >> .env
+            echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+            echo "MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}" >> .env
+            echo "REDIS_USER=${{ secrets.REDIS_USER }}" >> .env
+            echo "REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}" >> .env
+            echo "PAYMENT_KEY=${{ secrets.PAYMENT_KEY }}" >> .env
             
-            docker compose -f zookeeper-kafka.yml pull 
+            docker compose --env-file .env -f zookeeper-kafka.yml pull 
             docker compose --env-file .env -f service-module.yml pull
             
-            docker compose -f zookeeper-kafka.yml up -d
+            docker compose --env-file .env -f zookeeper-kafka.yml up -d
             docker compose --env-file .env -f service-module.yml up -d
