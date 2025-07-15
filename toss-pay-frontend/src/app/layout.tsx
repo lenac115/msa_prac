@@ -1,4 +1,4 @@
-import './utils/cryptoPolifill';
+import "../utils/cryptoPoly";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
