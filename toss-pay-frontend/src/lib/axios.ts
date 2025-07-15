@@ -1,6 +1,6 @@
 import axios from 'axios';
 import {getOrCreateDeviceId} from '@/utils/deviceId';
-import { setCookie, getCookie, deleteCookie, hasCookie } from 'cookies-next';
+import {getCookie, setCookie} from 'cookies-next';
 
 const instance = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_BASE_URL, // 환경변수에서 API 주소 가져오기
@@ -9,8 +9,7 @@ const instance = axios.create({
 
 instance.interceptors.request.use(
     (config) => {
-        const deviceId = getOrCreateDeviceId();
-        config.headers['X-Device-Id'] = deviceId;
+        config.headers['X-Device-Id'] = getOrCreateDeviceId();
 
         if (config.headers['x-ignore-interceptor']) {
             delete config.headers['x-ignore-interceptor'];

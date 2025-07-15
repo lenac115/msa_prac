@@ -1,0 +1,8 @@
+FROM postgres:15-alpine
+
+# Fly에서 환경변수로 설정됨:
+# POSTGRES_USER
+# POSTGRES_PASSWORD
+# POSTGRES_DB
+
+EXPOSE 5432

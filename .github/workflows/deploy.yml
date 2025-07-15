@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Set up Docker Compose
-        run: |  
+        run: |
           sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
           sudo chmod +x /usr/local/bin/docker-compose
           docker-compose --version
@@ -36,7 +36,6 @@ jobs:
       - name: Grant execute permission to gradlew
         run: chmod +x gradlew
 
-
       - name: Initialize Gradle Wrapper (if gradlew is missing)
         run: gradle wrapper
 
@@ -52,53 +51,47 @@ jobs:
       - name: Build and Push Docker Images
         run: |
           docker compose -f service-module.yml build
-          docker compose -f database-docker.yml build
           docker compose -f zookeeper-kafka.yml build
-          docker compose -f front-docker.yml build
-          
+
           docker compose -f service-module.yml push
-          docker compose -f database-docker.yml push 
           docker compose -f zookeeper-kafka.yml push
-          docker compose -f front-docker.yml push 
 
-      - name: Decode SSH Front key
+      # 🔽 Fly.io 배포 단계 추가
+      - name: Setup Fly CLI
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy PostgreSQL to Fly.io
         run: |
-          echo "${{ secrets.EC2_SSH_KEY_FRONT }}" | base64 -d > ec2_front_key.pem
-          chmod 600 ec2_front_key.pem
+          flyctl secrets set \
+          POSTGRES_USER=${{ secrets.POSTGRES_USER }} \
+          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} \
+          POSTGRES_DB=${{ secrets.POSTGRES_DB }} \
+          --app postgres-nameless-field-1504
+          
+          cd postgres-app
+        
+          flyctl deploy --remote-only --app postgres-nameless-field-1504
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
-      - name: Deploy to Ec2 via SSH by React
-        uses: appleboy/ssh-action@v0.1.6
-        timeout-minutes: 60
-        with:
-          host: ${{secrets.EC2_HOST_FRONT}}
-          username: ubuntu
-          key_path: ec2_front_key.pem
-          script: | 
-            if [ ! -d "msa-project" ]; then
-            git clone https://github.com/${{ github.repository }}.git msa-project
-            fi
-            cd ~/msa-project
-            git pull
-            
-            docker network create msa-network || true
-            
-            echo "EC2_HOST_FRONT=${{ secrets.EC2_HOST_FRONT }}" >> .env
-            echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> .env 
-            echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
-            echo "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" >> .env
-            echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
-            echo "MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}" >> .env
-            echo "REDIS_USER=${{ secrets.REDIS_USER }}" >> .env
-            echo "REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}" >> .env
-            echo "PAYMENT_KEY=${{ secrets.PAYMENT_KEY }}" >> .env
+      - name: Deploy Redis to Fly.io
+        run: |
+          cd redis-app
+          flyctl deploy --remote-only --app your-fly-redis-app
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
-            docker compose --env-file .env -f front-docker.yml pull 
-            docker compose --env-file .env -f database-docker.yml pull
-            docker compose --env-file .env -f front-docker.yml up -d
-            docker compose --env-file .env -f database-docker.yml up -d
 
+      - name: Deploy Frontend to Fly.io
+        run: |
+          cd toss-pay-frontend
+          flyctl deploy --remote-only --app your-fly-frontend-app
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      # 🔽 기존 EC2 배포 흐름은 그대로 유지
       - name: Decode SSH key
-        run: |  
+        run: |
           echo "${{ secrets.EC2_SSH_KEY }}" | base64 -d > ec2_key.pem
           chmod 600 ec2_key.pem
 
@@ -111,11 +104,11 @@ jobs:
           key_path: ec2_key.pem
           script: |
             if [ ! -d "msa-project" ]; then
-            git clone https://github.com/${{ github.repository }}.git msa-project
+              git clone https://github.com/${{ github.repository }}.git msa-project
             fi
             cd ~/msa-project
             git pull 
-                  
+            
             docker network create msa-network || true 
             
             echo "EC2_HOST=${{ secrets.EC2_HOST }}" >> .env
