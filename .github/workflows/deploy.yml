@@ -114,7 +114,7 @@ jobs:
             git clone https://github.com/${{ github.repository }}.git msa-project
             fi
             cd ~/msa-project
-            git pull
+            git pull 
                   
             docker network create msa-network || true 
             
