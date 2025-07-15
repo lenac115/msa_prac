@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
             ...config.resolve.alias,
             '@polyfills': path.resolve(__dirname, 'src/utils/polyfills'),
         };
+        return config;
     }
 
 };
