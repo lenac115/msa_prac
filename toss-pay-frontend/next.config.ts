@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from "node:path";
 
 const nextConfig: NextConfig = {
     eslint: {
@@ -8,6 +9,12 @@ const nextConfig: NextConfig = {
         host: '0.0.0.0',
         port: 3000,
     },
+    webpack: (config) => {
+        config.resolve.alias = {
+            ...config.resolve.alias,
+            '@polyfills': path.resolve(__dirname, 'src/utils/polyfills'),
+        };
+    }
 
 };
 

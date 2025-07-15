@@ -33,5 +33,3 @@ if (typeof window !== 'undefined') {
         }) as () => UUID;
     }
 }
-
-export {};
