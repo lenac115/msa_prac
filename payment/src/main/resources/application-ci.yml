@@ -64,6 +64,6 @@ toss:
 eureka:
   client:
     service-url:
-      defaultZone: http://discovery-service:8761/eureka
+      defaultZone: http://${EC2_HOST}:8761/eureka
     fetch-registry: false
     register-with-eureka: true
