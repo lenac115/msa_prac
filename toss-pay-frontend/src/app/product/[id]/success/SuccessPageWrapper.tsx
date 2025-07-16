@@ -22,12 +22,12 @@ export default function SuccessPageWrapper() {
 
         async function confirm() {
             try {
-                const response = await axios.get(`http://3.105.113.69:8080/order/common/get?orderEventId=${requestData.orderId}`)
+                const response = await axios.get(`http://13.209.93.165:8080/order/common/get?orderEventId=${requestData.orderId}`)
                 console.log(response.data.orderEventId)
                 setOrderId(response.data.orderEventId);
 
                 try {
-                    await axios.post(`http://3.105.113.69:8080/payment/confirm`, {
+                    await axios.post(`http://13.209.93.165:8080/payment/confirm`, {
                         payToken: requestData.paymentKey,
                         orderEventId: response.data.orderEventId,
                         totalAmount: requestData.amount

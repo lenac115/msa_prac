@@ -53,17 +53,17 @@ export default function orderPage() {
 
         const fetchProductAndUser = async () => {
             try {
-                const userResponse = await axios.get('http://3.105.113.69:8080/auth/common/get/me');
+                const userResponse = await axios.get('http://13.209.93.165:8080/auth/common/get/me');
                 const userData = userResponse.data;
                 setUser(userData);
 
-                const orderResponse = await axios.get(`http://3.105.113.69:8080/order/common/get/list/${userData.id}`);
+                const orderResponse = await axios.get(`http://13.209.93.165:8080/order/common/get/list/${userData.id}`);
                 const orderList = orderResponse.data.sort((a: any, b: any) => a.id - b.id);
                 setOrder(orderList);
 
                 const orderItemResponses = await Promise.all(
                     orderList.map((order: any) =>
-                    axios.get(`http://3.105.113.69:8080/order/common/get/orderItem/${order.id}`))
+                    axios.get(`http://13.209.93.165:8080/order/common/get/orderItem/${order.id}`))
                 );
                 const allOrderItems = orderItemResponses.flatMap(res => res.data);
                 setOrderItems(allOrderItems)

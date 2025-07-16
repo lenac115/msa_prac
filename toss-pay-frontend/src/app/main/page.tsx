@@ -36,7 +36,7 @@ export default function mainPage() {
         const fetchProductAndUser = async () => {
 
             try {
-                const response = await axios.get('http://3.105.113.69:8080/auth/common/get/me');
+                const response = await axios.get('http://13.209.93.165:8080/auth/common/get/me');
                 setUser(response.data);
             } catch (err: any) {
                 console.error(err);
@@ -54,7 +54,7 @@ export default function mainPage() {
             }
         
             try {
-                const response = await axios.get('http://3.105.113.69:8080/product/common/get/list');
+                const response = await axios.get('http://13.209.93.165:8080/product/common/get/list');
                 console.log(response);
                 const sorted = response.data.sort((a: { id: number; }, b: { id: number; }) => a.id - b.id); // id 기준 정렬
                 setProducts(sorted);
