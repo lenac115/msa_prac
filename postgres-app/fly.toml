@@ -9,14 +9,6 @@ primary_region = 'nrt'
 [build]
   dockerfile = './Dockerfile'
 
-[http_service]
-  internal_port = 5432
-  force_https = true
-  auto_stop_machines = 'stop'
-  auto_start_machines = true
-  min_machines_running = 0
-  processes = ['app']
-
 [[services]]
   protocol = 'tcp'
   internal_port = 5432
@@ -32,3 +24,6 @@ primary_region = 'nrt'
 [mounts]
   source = "pg_data"
   destination = "/var/lib/postgresql/data"
+
+[env]
+  PGDATA = "/var/lib/postgresql/data"

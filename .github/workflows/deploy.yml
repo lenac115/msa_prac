@@ -76,16 +76,14 @@ jobs:
 
       - name: Deploy Redis to Fly.io
         run: |
+          
+          flyctl secrets set \
+          REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }} \
+          REDIS_USER=${{ secrets.REDIS_USER }} \
+          --app your-fly-redis-app
+          
           cd redis-app
           flyctl deploy --remote-only --app your-fly-redis-app
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-
-
-      - name: Deploy Frontend to Fly.io
-        run: |
-          cd toss-pay-frontend
-          flyctl deploy --remote-only --app your-fly-frontend-app
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
@@ -112,6 +110,7 @@ jobs:
             docker network create msa-network || true 
             
             echo "EC2_HOST=${{ secrets.EC2_HOST }}" >> .env
+            echo "DATABASE_HOST=${{ secrets.DATABASE_HOST }}" >> .env
             echo "EC2_HOST_FRONT=${{ secrets.EC2_HOST_FRONT }}" >> .env
             echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> .env
             echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
