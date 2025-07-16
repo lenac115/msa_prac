@@ -9,12 +9,9 @@ primary_region = 'nrt'
 [build]
   dockerfile = './Dockerfile'
 
-[env]
-PGDATA = "/pgdata"
-
 [[mounts]]
 source = "pg_data"
-destination = "/pgdata"
+destination = "/data"
 
 
 [http_service]
