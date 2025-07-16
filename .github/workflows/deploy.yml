@@ -66,11 +66,11 @@ jobs:
           POSTGRES_USER=${{ secrets.POSTGRES_USER }} \
           POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} \
           POSTGRES_DB=${{ secrets.POSTGRES_DB }} \
-          --app postgres-nameless-field-1504
+          --app your-fly-postgres-app
           
           cd postgres-app
         
-          flyctl deploy --remote-only --app postgres-nameless-field-1504
+          flyctl deploy --remote-only --app your-fly-postgres-app
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
