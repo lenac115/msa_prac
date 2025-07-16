@@ -61,7 +61,7 @@ spring:
       allowed-headers: "Authorization, Content-Type"
 
 front:
-  uri: https://msa-prac.vercel.app/
+  uri: "https://msa-prac.vercel.app/"
 
 jwt:
   secret: ${JWT_SECRET}
