@@ -11,7 +11,7 @@ eureka:
 spring:
   data:
     redis:
-      host: redis
+      host: ${EC2_HOST}
       port: 6379
       client-name: ${REDIS_USER}
       password: ${REDIS_PASSWORD}
