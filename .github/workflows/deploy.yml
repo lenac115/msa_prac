@@ -51,43 +51,13 @@ jobs:
       - name: Build and Push Docker Images
         run: |
           docker compose -f service-module.yml build
+          docker compose -f database-docker.yml build
           docker compose -f zookeeper-kafka.yml build
 
           docker compose -f service-module.yml push
+          docker compose -f database-docker.yml push
           docker compose -f zookeeper-kafka.yml push
 
-      # 🔽 Fly.io 배포 단계 추가
-      - name: Setup Fly CLI
-        uses: superfly/flyctl-actions/setup-flyctl@master
-
-      - name: Deploy PostgreSQL to Fly.io
-        run: |
-          flyctl secrets set \
-          POSTGRES_USER=${{ secrets.POSTGRES_USER }} \
-          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} \
-          POSTGRES_DB=${{ secrets.POSTGRES_DB }} \
-          --app your-fly-postgres-app
-          
-          cd postgres-app
-        
-          flyctl deploy --remote-only --app your-fly-postgres-app
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-
-      - name: Deploy Redis to Fly.io
-        run: |
-          
-          flyctl secrets set \
-          REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }} \
-          REDIS_USER=${{ secrets.REDIS_USER }} \
-          --app your-fly-redis-app
-          
-          cd redis-app
-          flyctl deploy --remote-only --app your-fly-redis-app
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-
-      # 🔽 기존 EC2 배포 흐름은 그대로 유지
       - name: Decode SSH key
         run: |
           echo "${{ secrets.EC2_SSH_KEY }}" | base64 -d > ec2_key.pem
@@ -123,7 +93,9 @@ jobs:
             echo "PAYMENT_KEY=${{ secrets.PAYMENT_KEY }}" >> .env
             
             docker compose --env-file .env -f zookeeper-kafka.yml pull 
+            docker compose --env-file .env -f database-docker.yml pull 
             docker compose --env-file .env -f service-module.yml pull
             
             docker compose --env-file .env -f zookeeper-kafka.yml up -d
+            docker compose --env-file .env -f database-docker.yml up -d
             docker compose --env-file .env -f service-module.yml up -d
