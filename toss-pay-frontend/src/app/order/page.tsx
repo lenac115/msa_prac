@@ -53,17 +53,17 @@ export default function orderPage() {
 
         const fetchProductAndUser = async () => {
             try {
-                const userResponse = await axios.get('http://13.209.93.165:8080/auth/common/get/me');
+                const userResponse = await axios.get('https://msa-prac.duckdns.org/auth/common/get/me');
                 const userData = userResponse.data;
                 setUser(userData);
 
-                const orderResponse = await axios.get(`http://13.209.93.165:8080/order/common/get/list/${userData.id}`);
+                const orderResponse = await axios.get(`https://msa-prac.duckdns.org/order/common/get/list/${userData.id}`);
                 const orderList = orderResponse.data.sort((a: any, b: any) => a.id - b.id);
                 setOrder(orderList);
 
                 const orderItemResponses = await Promise.all(
                     orderList.map((order: any) =>
-                    axios.get(`http://13.209.93.165:8080/order/common/get/orderItem/${order.id}`))
+                    axios.get(`https://msa-prac.duckdns.org/order/common/get/orderItem/${order.id}`))
                 );
                 const allOrderItems = orderItemResponses.flatMap(res => res.data);
                 setOrderItems(allOrderItems)
@@ -73,7 +73,7 @@ export default function orderPage() {
 
                 const productResponses = await Promise.all(
                     uniqueProductIds.map((id) =>
-                    axios.get(`http://3.105.113.69:8080/product/common/get/${id}`)
+                    axios.get(`https://msa-prac.duckdns.org/product/common/get/${id}`)
                     )
                 );
 
@@ -100,7 +100,7 @@ export default function orderPage() {
     };
     async function handleCancelOrder(orderId: number) {
         try {
-            axios.post(`http://3.105.113.69:8080/order/common/cancel?orderId=${orderId}`);
+            axios.post(`https://msa-prac.duckdns.org/order/common/cancel?orderId=${orderId}`);
             alert(`주문이 취소되었습니다.`)
             router.refresh();
         } catch {

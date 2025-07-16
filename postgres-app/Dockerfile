@@ -6,6 +6,6 @@ RUN mkdir -p /var/lib/postgresql/data && \
 
 USER postgres
 
-ENV PGDATA=/var/lib/postgresql/data
+ENV PGDATA=/pgdata
 
 CMD ["postgres"]

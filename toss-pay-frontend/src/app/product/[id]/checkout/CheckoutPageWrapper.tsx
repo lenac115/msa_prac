@@ -80,7 +80,7 @@ export default function CheckoutPage() {
 
         const fetchProduct = async () => {
             try {
-                const response = await axios.get(`http://13.209.93.165:8080/product/common/get/${productId}`);
+                const response = await axios.get(`https://msa-prac.duckdns.org/product/common/get/${productId}`);
                 setProduct(response.data);
                 setAmount({
                     currency: "KRW",
@@ -98,7 +98,7 @@ export default function CheckoutPage() {
 
         const fetchUser = async () => {
             try {
-                const response = await axios.get('http://13.209.93.165:8080/auth/common/get/me');
+                const response = await axios.get('https://msa-prac.duckdns.org/auth/common/get/me');
                 setUser(response.data);
             } catch (err: any) {
                 console.error(err);
@@ -120,7 +120,7 @@ export default function CheckoutPage() {
                 paymentKey: paymentKey
             }
             try {
-                const response = await axios.post(`http://13.209.93.165:8080/payment/ready`, request);
+                const response = await axios.post(`https://msa-prac.duckdns.org/payment/ready`, request);
             } catch (err: any) {
                 console.error(err);
                 setError(err.response?.data?.message || '올바르지 않은 결제 정보입니다.');

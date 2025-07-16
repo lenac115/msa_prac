@@ -15,7 +15,7 @@ export default function LoginPage() {
         e.preventDefault();
         setError(null);
         try {
-            const response = await axios.post('http://13.209.93.165:8080/auth/public/login', {
+            const response = await axios.post('https://msa-prac.duckdns.org/auth/public/login', {
                     email,
                     password,
                 }, {
