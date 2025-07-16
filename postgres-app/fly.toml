@@ -10,11 +10,11 @@ primary_region = 'nrt'
   dockerfile = './Dockerfile'
 
 [env]
-  PGDATA = '/var/lib/postgresql/data'
+  PGDATA = '/var/lib/postgresql/data/pgdata'
 
 [[mounts]]
   source = 'pg_data'
-  destination = '/var/lib/postgresql/data'
+  destination = '/var/lib/postgresql/data/pgdata'
 
 [http_service]
   internal_port = 5432
