@@ -1,8 +1,11 @@
-FROM postgres:15-alpine
+FROM postgres:15
 
-# Fly에서 환경변수로 설정됨:
-# POSTGRES_USER
-# POSTGRES_PASSWORD
-# POSTGRES_DB
+# 명시적으로 권한 조정
+RUN mkdir -p /var/lib/postgresql/data && \
+    chown -R postgres:postgres /var/lib/postgresql/data
 
-EXPOSE 5432
+USER postgres
+
+ENV PGDATA=/var/lib/postgresql/data
+
+CMD ["postgres"]

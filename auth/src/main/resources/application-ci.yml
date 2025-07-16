@@ -15,7 +15,7 @@ spring:
 
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://${DATABASE_HOST}:5432/postgres
+    url: jdbc:postgresql://${POSTGRES_HOST}:5432/postgres
     username: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
 
@@ -27,7 +27,7 @@ spring:
 
   data:
     redis:
-      host: ${DATABASE_HOST}
+      host: ${REDIS_HOST}
       port: 6379
       client-name: ${REDIS_USER}
       password: ${REDIS_PASSWORD}

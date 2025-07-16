@@ -1,4 +1,4 @@
-# fly.toml app configuration file generated for your-fly-postgres-app on 2025-07-16T13:41:38+09:00
+# fly.toml app configuration file generated for your-fly-postgres-app on 2025-07-16T14:03:26+09:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
@@ -19,9 +19,9 @@ primary_region = 'nrt'
 [http_service]
   internal_port = 5432
   force_https = true
-  auto_stop_machines = 'stop'
+  auto_stop_machines = false
   auto_start_machines = true
-  min_machines_running = 0
+  min_machines_running = 1
   processes = ['app']
 
 [[services]]
