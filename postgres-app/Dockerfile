@@ -1,11 +1,12 @@
 FROM postgres:15
 
-# 명시적으로 권한 조정
-RUN mkdir -p /var/lib/postgresql/data && \
-    chown -R postgres:postgres /var/lib/postgresql/data
+# 데이터 경로를 Fly의 볼륨 마운트 경로에 맞게 설정
+ENV PGDATA=/data
+
+# 권한 설정
+RUN mkdir -p /data && chown -R postgres:postgres /data
 
 USER postgres
 
-ENV PGDATA=/pgdata
-
+# Postgres 실행
 CMD ["postgres"]

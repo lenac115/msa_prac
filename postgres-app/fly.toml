@@ -1,4 +1,4 @@
-# fly.toml app configuration file generated for your-fly-postgres-app on 2025-07-16T14:03:26+09:00
+# fly.toml app configuration file generated for your-fly-postgres-app on 2025-07-16T22:29:09+09:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
@@ -10,14 +10,12 @@ primary_region = 'nrt'
   dockerfile = './Dockerfile'
 
 [[mounts]]
-source = "pg_data"
-destination = "/data"
-
+  source = 'pg_data'
+  destination = '/data'
 
 [http_service]
   internal_port = 5432
-  force_https = true
-  auto_stop_machines = false
+  auto_stop_machines = 'off'
   auto_start_machines = true
   min_machines_running = 1
   processes = ['app']
@@ -30,6 +28,6 @@ destination = "/data"
     port = 5432
 
 [[vm]]
-  memory = '1gb'
+  memory = '512mb'
   cpu_kind = 'shared'
   cpus = 1
