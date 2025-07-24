@@ -58,11 +58,6 @@ services:
     container_name: api-gateway
     ports:
       - "8080:8080"
-    depends_on:
-      - auth-service
-      - order-service
-      - payment-service
-      - product-service
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
