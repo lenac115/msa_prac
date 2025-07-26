@@ -28,6 +28,23 @@ spring:
         interval: 30s
         initial-delay: 15s
     gateway:
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins:
+              - https://msa-prac.vercel.app
+              - http://localhost:3000
+              - https://msa-prac.duckdns.org
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders:
+              - Authorization
+              - Content-Type
+            allowCredentials: true
       discovery:
         locator:
           enabled: true
