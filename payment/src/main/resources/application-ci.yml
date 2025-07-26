@@ -68,7 +68,7 @@ toss:
 
 eureka:
   instance:
-    hostname: payment-service
+    hostname: ${AZURE_HOST}
     prefer-ip-address: true
     lease-renewal-interval-in-seconds: 30
     lease-expiration-duration-in-seconds: 90
