@@ -56,12 +56,13 @@ spring:
 
   graphql:
     cors:
-      allowed-origins: https://msa-prac.vercel.app/
+      allowed-origins: https://msa-prac.vercel.app, http://msa-prac.duckdns.org
       allowed-methods: "GET,POST,PUT,DELETE"
       allowed-headers: "Authorization, Content-Type"
+      allow-credentials: true
 
 front:
-  uri: "https://msa-prac.vercel.app/"
+  uri: "https://msa-prac.vercel.app"
 
 jwt:
   secret: ${JWT_SECRET}
