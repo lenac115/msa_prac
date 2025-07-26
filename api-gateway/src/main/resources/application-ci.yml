@@ -28,23 +28,6 @@ spring:
         interval: 30s
         initial-delay: 15s
     gateway:
-      globalcors:
-        cors-configurations:
-          '[/**]':
-            allowedOrigins:
-              - https://msa-prac.vercel.app
-              - http://localhost:3000
-              - https://msa-prac.duckdns.org
-            allowedMethods:
-              - GET
-              - POST
-              - PUT
-              - DELETE
-              - OPTIONS
-            allowedHeaders:
-              - Authorization
-              - Content-Type
-            allowCredentials: true
       discovery:
         locator:
           enabled: true
@@ -70,13 +53,6 @@ spring:
         - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials
   main:
     web-application-type: reactive
-
-  graphql:
-    cors:
-      allowed-origins: https://msa-prac.vercel.app, http://msa-prac.duckdns.org
-      allowed-methods: "GET,POST,PUT,DELETE"
-      allowed-headers: "Authorization, Content-Type"
-      allow-credentials: true
 
 front:
   uri: "https://msa-prac.vercel.app"
