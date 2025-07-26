@@ -67,6 +67,8 @@ jwt:
 eureka:
   instance:
     hostname: order-service
+    lease-renewal-interval-in-seconds: 30
+    lease-expiration-duration-in-seconds: 90
     prefer-ip-address: false
     instanceId: ${eureka.instance.hostname}:${server.port}
   client:
