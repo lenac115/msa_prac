@@ -73,7 +73,7 @@ eureka:
     lease-renewal-interval-in-seconds: 30
     lease-expiration-duration-in-seconds: 90
     ip-address: ${AZURE_HOST}
-    instanceId: ${eureka.instance.hostname}:${server.port}
+    instanceId: ${eureka.instance.ip-address}:${server.port}
   client:
     service-url:
       defaultZone: http://${EC2_HOST}:8761/eureka
