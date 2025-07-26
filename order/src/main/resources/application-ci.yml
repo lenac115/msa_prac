@@ -66,10 +66,11 @@ jwt:
 
 eureka:
   instance:
-    hostname: ${AZURE_HOST}
+    hostname: order-service
     lease-renewal-interval-in-seconds: 30
     lease-expiration-duration-in-seconds: 90
     prefer-ip-address: true
+    ip-address: ${AZURE_HOST}
     instanceId: ${eureka.instance.hostname}:${server.port}
   client:
     register-with-eureka: true
