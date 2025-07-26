@@ -69,12 +69,12 @@ toss:
 eureka:
   instance:
     hostname: payment-service
-    prefer-ip-address: false
+    prefer-ip-address: true
     lease-renewal-interval-in-seconds: 30
     lease-expiration-duration-in-seconds: 90
     instanceId: ${eureka.instance.hostname}:${server.port}
   client:
     service-url:
       defaultZone: http://${EC2_HOST}:8761/eureka
-    fetch-registry: false
+    fetch-registry: true
     register-with-eureka: true

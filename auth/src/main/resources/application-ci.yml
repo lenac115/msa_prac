@@ -69,8 +69,10 @@ eureka:
     hostname: auth-service
     lease-renewal-interval-in-seconds: 30
     lease-expiration-duration-in-seconds: 90
-    prefer-ip-address: false
+    prefer-ip-address: true
     instanceId: ${eureka.instance.hostname}:${server.port}
   client:
+    register-with-eureka: true
+    fetch-registry: true
     service-url:
       defaultZone: http://${EC2_HOST}:8761/eureka
