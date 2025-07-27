@@ -55,6 +55,7 @@ services:
       SPRING_PROFILES_ACTIVE: ci
     networks:
       - msa-network
-  networks:
-    msa-network:
-      external: true
+
+networks:
+  msa-network:
+    external: true
