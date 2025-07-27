@@ -52,13 +52,55 @@ jobs:
         run: |
           docker compose -f service-module.yml build
           docker compose -f service-module-azure.yml build
+          docker compose -f service-module-oracle.yml build
           docker compose -f database-docker.yml build
           docker compose -f zookeeper-kafka.yml build
 
           docker compose -f service-module.yml push
           docker compose -f service-module-azure.yml push
+          docker compose -f service-module-oracle.yml push
           docker compose -f database-docker.yml push
           docker compose -f zookeeper-kafka.yml push
+
+      - name: Decode Oracle SSH key
+        run: |
+          echo "${{ secrets.ORACLE_SSH_KEY }}" | base64 -d > oracle_key.pem
+          chmod 600 oracle_key.pem
+
+      - name: Deploy to Oracle via SSH
+        uses: appleboy/ssh-action@v0.1.6
+        timeout-minutes: 60
+        with:
+          host: ${{ secrets.ORACLE_HOST }}
+          username: ubuntu
+          key_path: oracle_key.pem
+          script: |
+            if [ ! -d "msa-project" ]; then
+              git clone https://github.com/${{ github.repository }}.git msa-project
+            fi
+            cd ~/msa-project
+            git pull 
+            
+            docker network create msa-network || true 
+            
+            echo "EC2_HOST=${{ secrets.EC2_HOST }}" >> .env
+            echo "ORACLE_HOST=${{ secrets.ORACLE_HOST }}" >> .env
+            echo "POSTGRES_HOST=${{ secrets.POSTGRES_HOST }}" >> .env
+            echo "REDIS_HOST=${{ secrets.REDIS_HOST }}" >> .env
+            echo "EC2_HOST_FRONT=${{ secrets.EC2_HOST_FRONT }}" >> .env
+            echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> .env
+            echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
+            echo "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" >> .env
+            echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+            echo "MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}" >> .env
+            echo "REDIS_USER=${{ secrets.REDIS_USER }}" >> .env
+            echo "REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}" >> .env
+            echo "PAYMENT_KEY=${{ secrets.PAYMENT_KEY }}" >> .env
+            echo "AZURE_HOST=${{ secrets.AZURE_HOST }}" >> .env
+            
+            docker compose --env-file .env -f service-module-oracle.yml pull
+            
+            docker compose --env-file .env -f service-module-oracle.yml up -d
 
       - name: Decode Azure SSH key
         run: |
@@ -82,6 +124,7 @@ jobs:
             docker network create msa-network || true 
             
             echo "EC2_HOST=${{ secrets.EC2_HOST }}" >> .env
+            echo "ORACLE_HOST=${{ secrets.ORACLE_HOST }}" >> .env
             echo "POSTGRES_HOST=${{ secrets.POSTGRES_HOST }}" >> .env
             echo "REDIS_HOST=${{ secrets.REDIS_HOST }}" >> .env
             echo "EC2_HOST_FRONT=${{ secrets.EC2_HOST_FRONT }}" >> .env
@@ -123,6 +166,7 @@ jobs:
             docker network create msa-network || true 
             
             echo "EC2_HOST=${{ secrets.EC2_HOST }}" >> .env
+            echo "ORACLE_HOST=${{ secrets.ORACLE_HOST }}" >> .env
             echo "POSTGRES_HOST=${{ secrets.POSTGRES_HOST }}" >> .env
             echo "REDIS_HOST=${{ secrets.REDIS_HOST }}" >> .env
             echo "EC2_HOST_FRONT=${{ secrets.EC2_HOST_FRONT }}" >> .env

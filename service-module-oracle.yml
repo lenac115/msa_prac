@@ -1,20 +1,23 @@
-
 services:
-  discovery-service:
-    image: nightwish115/discovery-service:latest
+  product-service:
+    image: nightwish115/product-service:latest
     build:
-      context: ./discovery-service
+      context: ./product
       dockerfile: Dockerfile
-    container_name: discovery-service
+    container_name: product-service
     ports:
-      - "8761:8761"
+      - "8084:8084"
     environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: ${AZURE_HOST}:9093
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${EC2_HOST}:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       SPRING_PROFILES_ACTIVE: ci
-      MAIL_PASSWORD: ${MAIL_PASSWORD}
       EC2_HOST: ${EC2_HOST}
-      JWT_SECRET: ${JWT_SECRET}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
       REDIS_HOST: ${REDIS_HOST}
       POSTGRES_HOST: ${POSTGRES_HOST}
+      JWT_SECRET: ${JWT_SECRET}
       REDIS_USER: ${REDIS_USER}
       AZURE_HOST: ${AZURE_HOST}
       REDIS_PASSWORD: ${REDIS_PASSWORD}
@@ -24,33 +27,34 @@ services:
     networks:
       - msa-network
 
-  api-gateway:
-    image: nightwish115/api-gateway:latest
+  payment-service:
+    image: nightwish115/payment-service:latest
     build:
-      context: ./api-gateway
+      context: ./payment
       dockerfile: Dockerfile
-    container_name: api-gateway
+    container_name: payment-service
     ports:
-      - "8080:8080"
+      - "8083:8083"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${EC2_HOST}:5432/${POSTGRES_DB}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       EC2_HOST: ${EC2_HOST}
-      SPRING_PROFILES_ACTIVE: ci
-      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      PAYMENT_KEY: ${PAYMENT_KEY}
       AZURE_HOST: ${AZURE_HOST}
-      JWT_SECRET: ${JWT_SECRET}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
       REDIS_HOST: ${REDIS_HOST}
       POSTGRES_HOST: ${POSTGRES_HOST}
+      JWT_SECRET: ${JWT_SECRET}
       REDIS_USER: ${REDIS_USER}
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       EC2_HOST_FRONT: ${EC2_HOST_FRONT}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      SPRING_PROFILES_ACTIVE: ci
     networks:
       - msa-network
-
-networks:
-  msa-network:
-    external: true
+  networks:
+    msa-network:
+      external: true
