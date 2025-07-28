@@ -77,3 +77,6 @@ eureka:
     fetch-registry: true
     service-url:
       defaultZone: http://${EC2_HOST}:8761/eureka
+
+azure:
+  host: ${AZURE_HOST}
