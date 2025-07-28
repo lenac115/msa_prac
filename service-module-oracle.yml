@@ -82,6 +82,7 @@ services:
       EC2_HOST_FRONT: ${EC2_HOST_FRONT}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      ORACLE_HOST: ${ORACLE_HOST}
       SPRING_PROFILES_ACTIVE: ci
     networks:
       - msa-network
