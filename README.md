@@ -5,7 +5,7 @@ Kafka를 활용한 **비동기 이벤트 처리** 와 **Spring Security (JWT 인
 
 ---
 
-```mermiad
+```mermaid
 flowchart LR
     subgraph Client[사용자 브라우저]
         FE[React/Next.js Frontend]
