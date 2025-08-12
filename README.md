@@ -34,7 +34,7 @@ flowchart LR
         PDS <-->|Product Events| KAFKA
         AUS <-->|Auth Events| KAFKA
     end
-
+```
 ---
 
 ## 📌 아키텍처 개요 (MSA 구조)
