@@ -2,7 +2,38 @@
 
 이 프로젝트는 **마이크로서비스 아키텍처(MSA)** 를 기반으로 한 주문 및 결제 시스템입니다.  
 Kafka를 활용한 **비동기 이벤트 처리** 와 **Spring Security (JWT 인증)** 을 적용하여 확장성과 보안성을 고려한 구조로 설계되었습니다.  
-또한, **실시간 채팅 기능(WebSocket + Kafka)** 을 추가하여 고객과 판매자 간의 원활한 소통을 지원합니다.
+
+---
+
+```mermiad
+flowchart LR
+    subgraph Client[사용자 브라우저]
+        FE[React/Next.js Frontend]
+    end
+
+    FE -->|HTTP Request| GW[API Gateway]
+
+    subgraph Cloud[Cloud Environment]
+        GW -->|Service Discovery| ES[Eureka Server]
+        
+        ES --> ORS[Order Service]
+        ES --> PAS[Payment Service]
+        ES --> PDS[Product Service]
+        ES --> AUS[Auth Service]
+        
+        %% Databases
+        ORS --> ORD_DB[(PostgreSQL - Orders)]
+        PAS --> PAY_DB[(PostgreSQL - Payments)]
+        PDS --> PRD_DB[(PostgreSQL - Products)]
+        AUS --> AUTH_DB[(PostgreSQL - Users)]
+        AUS --> REDIS[(Redis - Refresh Tokens/Blacklist)]
+        
+        %% Kafka
+        ORS <-->|Order Events| KAFKA[(Apache Kafka)]
+        PAS <-->|Payment Events| KAFKA
+        PDS <-->|Product Events| KAFKA
+        AUS <-->|Auth Events| KAFKA
+    end
 
 ---
 
@@ -24,11 +55,7 @@ Kafka를 활용한 **비동기 이벤트 처리** 와 **Spring Security (JWT 인
 - 주문 상태 변경 (`ORDERED` → `PAID`)
 - Kafka를 이용한 결제 이벤트 처리
 
-4️⃣ **Chat Service (실시간 채팅 서비스)**
-- WebSocket을 이용한 실시간 채팅 기능
-- Kafka를 Message Broker로 활용하여 메시지 전송
-
-5️⃣ **API Gateway (게이트웨이 서비스)**
+4️⃣ **API Gateway (게이트웨이 서비스)**
 - Spring Cloud Gateway를 사용하여 API 요청을 라우팅
 - JWT 인증 및 보안 필터 적용
 
@@ -39,12 +66,12 @@ Kafka를 활용한 **비동기 이벤트 처리** 와 **Spring Security (JWT 인
 |---------------|-----------------|
 | **Language**  | Java 17, Spring Boot |
 | **Frameworks**  | Spring Security, Spring WebFlux, Spring Kafka |
-| **Database**   | MySQL, Redis (캐싱) |
+| **Database**   | MySQL, Redis |
 | **Message Queue** | Apache Kafka |
 | **API Gateway** | Spring Cloud Gateway |
-| **Real-time**   | WebSocket, Kafka Streams |
+| **Real-time**   | Kafka Streams |
 | **Authentication** | JWT (JSON Web Token) |
-| **DevOps**      | Docker, Kubernetes, Prometheus, Grafana |
+| **DevOps**      | Docker |
 
 ---
 
@@ -57,10 +84,6 @@ Kafka를 활용한 **비동기 이벤트 처리** 와 **Spring Security (JWT 인
 - **주문 및 결제 처리**
     - `order-service` → `payment-service` 로 결제 요청 이벤트 발행
     - `payment-service` → `order-service` 로 결제 완료 이벤트 발행
-
-- **실시간 채팅**
-    - `chat-service` 가 Kafka Topic을 구독하여 메시지 전달
-    - `BUYER` 와 `SELLER` 간 WebSocket을 통해 실시간 채팅 지원
 
 ---
 
@@ -105,15 +128,6 @@ Authorization: Bearer {accessToken}
   "email": "buyer@example.com"
 }
 ```
-
----
-
-## 🛠️ 구현 예정 기능
-✅ **1. Kafka 기반 주문 이벤트 연동**  
-✅ **2. WebSocket을 통한 실시간 채팅 구축**  
-✅ **3. Redis를 활용한 사용자 정보 캐싱**  
-✅ **4. 결제 서비스 연동 (PG사 모듈 추가 가능)**  
-✅ **5. Prometheus + Grafana 기반 모니터링 구축**
 
 ---
 
