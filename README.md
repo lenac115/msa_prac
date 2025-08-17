@@ -122,7 +122,6 @@ flowchart LR
         end
         ORS-->>GW: 주문 최종 상태 응답
         GW-->>User: 결제 결과 화면 표시
-    end
 ```
 
 ---
