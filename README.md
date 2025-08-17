@@ -3,8 +3,8 @@
 MSA 구조와 이벤트 기반 아키텍처를 학습하기 위해 진행한 개인 프로젝트입니다.
 실제 쇼핑몰 환경을 간단히 모델링하여 주문, 결제, 상품, 인증 기능을 마이크로서비스로 분리하고,
 서비스 간 통신은 Kafka 이벤트 스트리밍을 활용했습니다.
+운영 목적보다는 MSA 설계, 서비스 간 데이터 흐름, 장애 복구 패턴(Saga)을 직접 구현·실습하는 것에 초점을 두었습니다.
 
-운영 목적보다는 **MSA 설계, 서비스 간 데이터 흐름, 장애 복구 패턴(Saga)**을 직접 구현·실습하는 것에 초점을 두었습니다.
 ---
 
 ```mermaid
@@ -95,31 +95,33 @@ flowchart LR
     - 주문 생성 → Kafka 이벤트 발행 → 결제 서비스 소비 → 결제 승인/실패 이벤트 → 주문 상태 업데이트
     - 주문 상태는 CREATED, PAID, CANCELLED 흐름을 지원
     - 결제 실패 시 Saga 패턴 기반으로 주문 취소(보상 트랜잭션) 수행
+
+---
 ```mermaid
-sequenceDiagram
-    participant User as 사용자(프론트엔드)
-    participant GW as API Gateway
-    participant ORS as Order Service
-    participant KAFKA as Kafka Broker
-    participant PAS as Payment Service
-
-    User->>GW: 주문 요청 (상품ID, 수량)
-    GW->>ORS: 주문 생성 요청
-    ORS->>ORS: 주문 상태 = CREATED
-    ORS->>KAFKA: OrderCreated 이벤트 발행
-
-    KAFKA->>PAS: OrderCreated 이벤트 소비
-    PAS->>PAS: 결제 승인/실패 처리
-    PAS->>KAFKA: PaymentResult 이벤트 발행
-
-    KAFKA->>ORS: PaymentResult 이벤트 소비
-    alt 결제 성공
-        ORS->>ORS: 주문 상태 = PAID
-    else 결제 실패
-        ORS->>ORS: 주문 상태 = CANCELLED (Saga 보상 트랜잭션)
-    end
-    ORS-->>GW: 주문 최종 상태 응답
-    GW-->>User: 결제 결과 화면 표시
+    sequenceDiagram
+        participant User as 사용자(프론트엔드)
+        participant GW as API Gateway
+        participant ORS as Order Service
+        participant KAFKA as Kafka Broker
+        participant PAS as Payment Service
+    
+        User->>GW: 주문 요청 (상품ID, 수량)
+        GW->>ORS: 주문 생성 요청
+        ORS->>ORS: 주문 상태 = CREATED
+        ORS->>KAFKA: OrderCreated 이벤트 발행
+    
+        KAFKA->>PAS: OrderCreated 이벤트 소비
+        PAS->>PAS: 결제 승인/실패 처리
+        PAS->>KAFKA: PaymentResult 이벤트 발행
+    
+        KAFKA->>ORS: PaymentResult 이벤트 소비
+        alt 결제 성공
+            ORS->>ORS: 주문 상태 = PAID
+        else 결제 실패
+            ORS->>ORS: 주문 상태 = CANCELLED (Saga 보상 트랜잭션)
+        end
+        ORS-->>GW: 주문 최종 상태 응답
+        GW-->>User: 결제 결과 화면 표시
     end
 ```
 
